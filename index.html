@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patient Survey</title>
+    <title>Patient Feedback</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         .survey-bg { background-color: #038752; }
-        .emoji-btn { transition: all 0.3s ease; cursor: pointer; }
-        .selected { transform: scale(1.4); filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); opacity: 1 !important; }
+        /* Animation Classes */
+        .emoji-btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0.4; cursor: pointer; }
+        .emoji-btn:hover { transform: scale(1.2); opacity: 0.7; }
+        .emoji-btn.active { transform: scale(1.4); opacity: 1; filter: drop-shadow(0 0 10px rgba(0,0,0,0.3)); }
     </style>
 </head>
 <body class="survey-bg min-h-screen flex items-center justify-center p-6">
@@ -17,14 +19,13 @@
     <div class="bg-white w-full max-w-5xl rounded-3xl shadow-2xl p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
         <div class="md:col-span-2 space-y-6">
             <img src="https://i.imgur.com/VbZKWAf.png" class="h-16 object-contain">
-            
             <input id="patientId" type="text" placeholder="Enter Patient ID Number" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-[#038752] outline-none">
 
             <div class="text-center py-4">
                 <p class="font-bold text-gray-700 mb-4">How was your visit today?</p>
                 <div class="flex justify-center gap-12">
-                    <button type="button" id="btn-smile" onclick="selectFeeling('smile')" class="emoji-btn text-7xl opacity-40">😊</button>
-                    <button type="button" id="btn-sad" onclick="selectFeeling('sad')" class="emoji-btn text-7xl opacity-40">☹️</button>
+                    <button id="btn-smile" class="emoji-btn text-7xl">😊</button>
+                    <button id="btn-sad" class="emoji-btn text-7xl">☹️</button>
                 </div>
             </div>
 
@@ -36,12 +37,11 @@
         </div>
 
         <div class="hidden md:flex flex-col items-center justify-center bg-gray-100 rounded-2xl border-4 border-dashed border-gray-300 p-4">
-            <span class="text-gray-400 font-bold rotate-90 md:rotate-0">ADVERTISEMENT</span>
+            <span class="text-gray-400 font-bold">ADVERTISEMENT</span>
         </div>
     </div>
 
     <script>
-        // Initialize Supabase
         const supabase = supabase.createClient(
             'https://cqwicgpyxxkwyvnckgeh.supabase.co',
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw'
@@ -49,36 +49,37 @@
 
         let currentFeeling = '';
 
-        function selectFeeling(type) {
+        // Handle Emoji Selection
+        const smileBtn = document.getElementById('btn-smile');
+        const sadBtn = document.getElementById('btn-sad');
+
+        function updateSelection(type) {
             currentFeeling = type;
-            document.getElementById('btn-smile').classList.toggle('selected', type === 'smile');
-            document.getElementById('btn-sad').classList.toggle('selected', type === 'sad');
+            smileBtn.classList.toggle('active', type === 'smile');
+            sadBtn.classList.toggle('active', type === 'sad');
         }
 
-        // Attach event listener via JS to ensure it's loaded after DOM
+        smileBtn.addEventListener('click', () => updateSelection('smile'));
+        sadBtn.addEventListener('click', () => updateSelection('sad'));
+
+        // Handle Submission
         document.getElementById('submitBtn').addEventListener('click', async () => {
             const patientId = document.getElementById('patientId').value;
             const comment = document.getElementById('comment').value;
 
-            if (!patientId || !currentFeeling) {
-                alert('Please enter ID and select an emoji!');
-                return;
-            }
+            if (!patientId || !currentFeeling) return alert('Please enter ID and select an emoji!');
 
-            const { error } = await supabase.from('patient_feedback').insert([
-                { 
-                    patient_id: patientId, 
-                    feedback_type: currentFeeling, 
-                    comment: comment,
-                    device_id: 'Tablet-01' // You can change this or make it dynamic
-                }
-            ]);
+            const { error } = await supabase.from('patient_feedback').insert([{ 
+                patient_id: patientId, 
+                feedback_type: currentFeeling, 
+                comment: comment,
+                device_id: 'Tablet-01' 
+            }]);
 
             if (error) {
-                console.error(error);
-                alert('Error submitting: ' + error.message);
+                alert('Error: ' + error.message);
             } else {
-                alert('Thank you for your feedback!');
+                alert('Thank you!');
                 location.reload();
             }
         });
