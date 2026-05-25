@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>.survey-bg { background-color: #038752; }</style>
+</head>
+<body class="survey-bg min-h-screen p-4 flex items-center justify-center">
+    <div class="bg-white w-full max-w-2xl rounded-3xl p-8 space-y-6">
+        <img src="https://i.imgur.com/VbZKWAf.png" class="h-16 mx-auto">
+        
+        <input id="patientId" type="text" placeholder="Patient ID Number" class="w-full p-4 border-2 rounded-xl">
+
+        <div class="text-center">
+            <p class="font-bold mb-4">How was your visit?</p>
+            <div class="flex justify-center gap-8">
+                <button onclick="submitSurvey('smile')" class="text-6xl">😊</button>
+                <button onclick="submitSurvey('sad')" class="text-6xl">☹️</button>
+            </div>
+        </div>
+
+        <textarea id="comment" rows="3" class="w-full p-4 border-2 rounded-xl" placeholder="Help us improve..."></textarea>
+    </div>
+
+    <script>
+        const supabase = supabase.createClient(
+            'https://cqwicgpyxxkwyvnckgeh.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw'
+        );
+
+        async function submitSurvey(type) {
+            const patientId = document.getElementById('patientId').value;
+            const comment = document.getElementById('comment').value;
+
+            if (!patientId) return alert('Please enter Patient ID');
+
+            const { error } = await supabase
+                .from('patient_feedback')
+                .insert([{ patient_id: patientId, feedback_type: type, comment: comment }]);
+
+            if (error) {
+                alert('Error submitting: ' + error.message);
+            } else {
+                alert('Thank you for your feedback!');
+                location.reload(); // Refresh to clear form
+            }
+        }
+    </script>
+</body>
+</html>
