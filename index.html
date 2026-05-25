@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patient Feedback</title>
+    <title>Patient Feedback Survey</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -23,16 +23,24 @@
             100% { transform: scale(1); }
         }
         
+        /* State when selected */
         .pulse-active { 
             opacity: 1 !important; 
             filter: grayscale(0%) !important;
             animation: pulse-glow 1.5s infinite;
         }
+
+        /* Color Glows (Since emojis cannot be 'colored' like text) */
+        .active-very-happy { filter: drop-shadow(0 0 15px #16a34a) grayscale(0%); }
+        .active-happy { filter: drop-shadow(0 0 15px #84cc16) grayscale(0%); }
+        .active-unhappy { filter: drop-shadow(0 0 15px #fca5a5) grayscale(0%); }
+        .active-very-unhappy { filter: drop-shadow(0 0 15px #dc2626) grayscale(0%); }
     </style>
 </head>
 <body class="survey-bg min-h-screen flex items-center justify-center p-6">
 
     <div class="bg-white w-full max-w-5xl rounded-3xl shadow-2xl p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Form Section -->
         <div class="md:col-span-2 space-y-6">
             <img src="https://i.imgur.com/VbZKWAf.png" class="h-16 object-contain">
             <h2 class="text-2xl font-bold text-gray-800 text-center">We Value your Feedback</h2>
@@ -42,10 +50,10 @@
             <div class="text-center py-4">
                 <p class="font-bold text-gray-700 mb-6">How was your visit today?</p>
                 <div class="flex justify-center gap-6">
-                    <button type="button" data-value="very-happy" data-color="#16a34a" class="emoji-btn">😁</button>
-                    <button type="button" data-value="happy" data-color="#84cc16" class="emoji-btn">🙂</button>
-                    <button type="button" data-value="unhappy" data-color="#fca5a5" class="emoji-btn">🙁</button>
-                    <button type="button" data-value="very-unhappy" data-color="#dc2626" class="emoji-btn">☹️</button>
+                    <button type="button" data-value="very-happy" class="emoji-btn">😁</button>
+                    <button type="button" data-value="happy" class="emoji-btn">🙂</button>
+                    <button type="button" data-value="unhappy" class="emoji-btn">🙁</button>
+                    <button type="button" data-value="very-unhappy" class="emoji-btn">☹️</button>
                 </div>
             </div>
 
@@ -56,12 +64,14 @@
             </button>
         </div>
 
+        <!-- Ad Sidebar -->
         <div class="hidden md:flex flex-col items-center justify-center bg-gray-100 rounded-2xl border-4 border-dashed border-gray-300 p-4">
             <span class="text-gray-400 font-bold uppercase rotate-90 md:rotate-0">Advertisement</span>
         </div>
     </div>
 
     <script>
+        // Supabase Init
         window.surveyClient = window.surveyClient || supabase.createClient(
             'https://cqwicgpyxxkwyvnckgeh.supabase.co',
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw'
@@ -72,15 +82,14 @@
         document.querySelectorAll('.emoji-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 currentFeeling = btn.getAttribute('data-value');
-                const color = btn.getAttribute('data-color');
                 
+                // Reset all
                 document.querySelectorAll('.emoji-btn').forEach(b => {
-                    b.classList.remove('pulse-active');
-                    b.style.color = 'inherit'; 
+                    b.classList.remove('pulse-active', 'active-very-happy', 'active-happy', 'active-unhappy', 'active-very-unhappy');
                 });
 
-                btn.classList.add('pulse-active');
-                btn.style.color = color;
+                // Set active
+                btn.classList.add('pulse-active', 'active-' + currentFeeling);
             });
         });
 
