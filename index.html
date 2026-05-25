@@ -22,7 +22,6 @@
             justify-content: center;
         }
         
-        /* The Pulsing Effect */
         @keyframes pulse-pop {
             0% { transform: scale(1); }
             50% { transform: scale(1.2); }
@@ -52,7 +51,7 @@
                     <button type="button" data-value="very-happy" class="emoji-btn"><img src="happy-face.png" alt="Very Happy"></button>
                     <button type="button" data-value="happy" class="emoji-btn"><img src="happiness.png" alt="Happy"></button>
                     <button type="button" data-value="unhappy" class="emoji-btn"><img src="angry.png" alt="Unhappy"></button>
-                    <button type="button" data-value="very-unhappy" class="emoji-btn"><img src="angry (1).png" alt="Very Unhappy"></button>
+                    <button type="button" data-value="very-unhappy" class="emoji-btn"><img src="angry-1.png" alt="Very Unhappy"></button>
                 </div>
             </div>
 
@@ -63,17 +62,19 @@
             </button>
         </div>
 
-        <div class="hidden md:flex flex-col items-center justify-center bg-gray-100 rounded-2xl border-4 border-dashed border-gray-300 p-4">
-            <span class="text-gray-400 font-bold uppercase rotate-90 md:rotate-0">Advertisement</span>
+        <div id="ad-container" class="hidden md:flex flex-col items-center justify-center bg-gray-100 rounded-2xl border-4 border-dashed border-gray-300 p-2 overflow-hidden relative">
+            <img id="ad-slide" src="https://i.imgur.com/4Fo00rK.jpeg" class="w-full h-full object-cover rounded-xl transition-opacity duration-1000">
         </div>
     </div>
 
     <script>
+        // Supabase Initialization
         window.surveyClient = window.surveyClient || supabase.createClient(
             'https://cqwicgpyxxkwyvnckgeh.supabase.co',
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw'
         );
 
+        // Emoji Selection Logic
         document.querySelectorAll('.emoji-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('active-pulse'));
@@ -81,6 +82,27 @@
             });
         });
 
+        // Advertisement Slideshow Logic
+        const images = [
+            'https://i.imgur.com/4Fo00rK.jpeg',
+            'https://i.imgur.com/GeiP1sM.jpeg',
+            'https://i.imgur.com/vh1Xtc6.jpeg',
+            'https://i.imgur.com/cMR3NlE.jpeg'
+        ];
+
+        let currentIndex = 0;
+        const adSlide = document.getElementById('ad-slide');
+
+        setInterval(() => {
+            currentIndex = (currentIndex + 1) % images.length;
+            adSlide.style.opacity = 0; 
+            setTimeout(() => {
+                adSlide.src = images[currentIndex];
+                adSlide.style.opacity = 1;
+            }, 500);
+        }, 4000);
+
+        // Submit Button Logic
         document.getElementById('submitBtn').addEventListener('click', async () => {
             const selected = document.querySelector('.active-pulse');
             if (!selected) return alert('Please select a face!');
@@ -93,7 +115,7 @@
             }]);
             
             if (error) alert('Error: ' + error.message);
-            else { alert('Thank you!'); location.reload(); }
+            else { alert('Thank you for your feedback!'); location.reload(); }
         });
     </script>
 </body>
