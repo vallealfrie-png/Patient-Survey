@@ -3,20 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patient Feedback</title>
+    <title>Patient Feedback Survey</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         .survey-bg { background-color: #038752; }
         
-        .emoji-btn { transition: all 0.3s ease; opacity: 0.4; cursor: pointer; }
+        /* Emoji Interaction Styles */
+        .emoji-btn { 
+            transition: all 0.3s ease; 
+            opacity: 0.4; 
+            cursor: pointer; 
+            font-size: 3.5rem; 
+            padding: 10px;
+            border-radius: 50%;
+        }
         .emoji-btn:hover { transform: scale(1.1); opacity: 0.7; }
         
         /* Pulsing Animation for Selected State */
         @keyframes pulse-animation {
-            0% { transform: scale(1.3); }
+            0% { transform: scale(1.2); }
             50% { transform: scale(1.4); }
-            100% { transform: scale(1.3); }
+            100% { transform: scale(1.2); }
         }
         
         .emoji-btn.active { 
@@ -30,14 +38,17 @@
 
     <div class="bg-white w-full max-w-5xl rounded-3xl shadow-2xl p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
         <div class="md:col-span-2 space-y-6">
-            <img src="https://i.imgur.com/VbZKWAf.png" class="h-16 object-contain">
+            <img src="https://i.imgur.com/VbZKWAf.png" alt="Logo" class="h-16 object-contain">
+            
             <input id="patientId" type="text" placeholder="Enter Patient ID Number" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-[#038752] outline-none">
 
             <div class="text-center py-4">
-                <p class="font-bold text-gray-700 mb-4">How was your visit today?</p>
-                <div class="flex justify-center gap-12">
-                    <button id="btn-smile" class="emoji-btn text-7xl">😊</button>
-                    <button id="btn-sad" class="emoji-btn text-7xl">☹️</button>
+                <p class="font-bold text-gray-700 mb-6 text-lg">How was your visit today?</p>
+                <div class="flex justify-center gap-6">
+                    <button type="button" data-value="very-happy" class="emoji-btn">😁</button>
+                    <button type="button" data-value="happy" class="emoji-btn">🙂</button>
+                    <button type="button" data-value="unhappy" class="emoji-btn">🙁</button>
+                    <button type="button" data-value="very-unhappy" class="emoji-btn">☹️</button>
                 </div>
             </div>
 
@@ -49,40 +60,39 @@
         </div>
 
         <div class="hidden md:flex flex-col items-center justify-center bg-gray-100 rounded-2xl border-4 border-dashed border-gray-300 p-4">
-            <span class="text-gray-400 font-bold">ADVERTISEMENT</span>
+            <span class="text-gray-400 font-bold uppercase tracking-widest rotate-90 md:rotate-0">Advertisement</span>
         </div>
     </div>
 
     <script>
-        // Use a block to ensure scope and check if client exists
-        if (typeof supabaseClient === 'undefined') {
-            const supabaseClient = supabase.createClient(
-                'https://cqwicgpyxxkwyvnckgeh.supabase.co',
-                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw'
-            );
-            window.supabaseClient = supabaseClient;
-        }
+        // Supabase Initialization
+        const supabase = supabase.createClient(
+            'https://cqwicgpyxxkwyvnckgeh.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw'
+        );
 
         let currentFeeling = '';
-        const smileBtn = document.getElementById('btn-smile');
-        const sadBtn = document.getElementById('btn-sad');
 
-        function updateSelection(type) {
-            currentFeeling = type;
-            smileBtn.classList.toggle('active', type === 'smile');
-            sadBtn.classList.toggle('active', type === 'sad');
-        }
+        // Handle emoji selection
+        document.querySelectorAll('.emoji-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentFeeling = btn.getAttribute('data-value');
+                document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
 
-        smileBtn.addEventListener('click', () => updateSelection('smile'));
-        sadBtn.addEventListener('click', () => updateSelection('sad'));
-
+        // Handle Form Submission
         document.getElementById('submitBtn').addEventListener('click', async () => {
             const patientId = document.getElementById('patientId').value;
             const comment = document.getElementById('comment').value;
 
-            if (!patientId || !currentFeeling) return alert('Please enter ID and select an emoji!');
+            if (!patientId || !currentFeeling) {
+                alert('Please enter your Patient ID and select an emoticon!');
+                return;
+            }
 
-            const { error } = await window.supabaseClient.from('patient_feedback').insert([{ 
+            const { error } = await supabase.from('patient_feedback').insert([{ 
                 patient_id: patientId, 
                 feedback_type: currentFeeling, 
                 comment: comment,
@@ -90,10 +100,10 @@
             }]);
 
             if (error) {
-                alert('Error: ' + error.message);
+                alert('Submission Error: ' + error.message);
             } else {
-                alert('Thank you!');
-                location.reload();
+                alert('Thank you for your feedback!');
+                location.reload(); // Refresh the page to clear the form
             }
         });
     </script>
