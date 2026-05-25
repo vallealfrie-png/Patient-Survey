@@ -11,30 +11,20 @@
         
         .emoji-btn { 
             transition: all 0.3s ease; 
-            opacity: 0.3; 
+            opacity: 0.4; 
             cursor: pointer; 
-            font-size: 4rem; 
-            padding: 10px;
-            filter: grayscale(100%); /* Makes it look neutral/inactive */
+            width: 90px; 
+            height: 90px;
+            padding: 5px;
+            border-radius: 12px;
         }
         
-        @keyframes pulse-pop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-        
-        /* The "Glow" effect to force a color onto the emoji */
+        /* Animation when selected */
         .pulse-active { 
             opacity: 1 !important; 
-            filter: grayscale(0%) !important;
-            animation: pulse-pop 0.4s ease-out;
+            transform: scale(1.2);
+            background-color: rgba(255, 255, 255, 0.2);
         }
-
-        .active-very-happy { filter: drop-shadow(0 0 15px #16a34a) grayscale(0%); }
-        .active-happy { filter: drop-shadow(0 0 15px #84cc16) grayscale(0%); }
-        .active-unhappy { filter: drop-shadow(0 0 15px #fca5a5) grayscale(0%); }
-        .active-very-unhappy { filter: drop-shadow(0 0 15px #dc2626) grayscale(0%); }
     </style>
 </head>
 <body class="survey-bg min-h-screen flex items-center justify-center p-6">
@@ -48,11 +38,19 @@
 
             <div class="text-center py-4">
                 <p class="font-bold text-gray-700 mb-6">How was your visit today?</p>
-                <div class="flex justify-center gap-4">
-                    <button type="button" data-value="very-happy" class="emoji-btn">😁</button>
-                    <button type="button" data-value="happy" class="emoji-btn">🙂</button>
-                    <button type="button" data-value="unhappy" class="emoji-btn">🙁</button>
-                    <button type="button" data-value="very-unhappy" class="emoji-btn">☹️</button>
+                <div class="flex justify-center gap-6">
+                    <button type="button" data-value="very-happy" class="emoji-btn">
+                        <img src="Patient-Survey/happy-face.png" alt="Very Happy">
+                    </button>
+                    <button type="button" data-value="happy" class="emoji-btn">
+                        <img src="Patient-Survey/happiness.png" alt="Happy">
+                    </button>
+                    <button type="button" data-value="unhappy" class="emoji-btn">
+                        <img src="Patient-Survey/angry.png" alt="Unhappy">
+                    </button>
+                    <button type="button" data-value="very-unhappy" class="emoji-btn">
+                        <img src="Patient-Survey/angry (1).png" alt="Very Unhappy">
+                    </button>
                 </div>
             </div>
 
@@ -76,11 +74,8 @@
 
         document.querySelectorAll('.emoji-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                const val = btn.getAttribute('data-value');
-                document.querySelectorAll('.emoji-btn').forEach(b => {
-                    b.classList.remove('pulse-active', 'active-very-happy', 'active-happy', 'active-unhappy', 'active-very-unhappy');
-                });
-                btn.classList.add('pulse-active', 'active-' + val);
+                document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('pulse-active'));
+                btn.classList.add('pulse-active');
             });
         });
 
