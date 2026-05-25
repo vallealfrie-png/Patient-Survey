@@ -12,22 +12,22 @@
             transition: all 0.3s ease; 
             opacity: 0.4; 
             cursor: pointer; 
-            width: 90px; 
-            height: 90px;
-            fill: #94a3b8; /* Gray default */
+            width: 85px; 
+            height: 85px;
+            fill: #64748b; 
         }
-        @keyframes pulse-glow {
+        @keyframes pulse-pop {
             0% { transform: scale(1); }
-            50% { transform: scale(1.15); }
+            50% { transform: scale(1.1); }
             100% { transform: scale(1); }
         }
-        .pulse-active { opacity: 1 !important; animation: pulse-glow 1.5s infinite; }
+        .pulse-active { opacity: 1 !important; animation: pulse-pop 0.4s ease-out; }
         
-        /* Specific Colors */
-        .active-very-happy { fill: #16a34a !important; } /* Green */
-        .active-happy { fill: #84cc16 !important; }      /* Light Green */
-        .active-unhappy { fill: #fca5a5 !important; }    /* Light Red */
-        .active-very-unhappy { fill: #dc2626 !important; } /* Red */
+        /* HappyOrNot Style Colors */
+        .active-very-happy { fill: #16a34a !important; }
+        .active-happy { fill: #84cc16 !important; }
+        .active-unhappy { fill: #fca5a5 !important; }
+        .active-very-unhappy { fill: #dc2626 !important; }
     </style>
 </head>
 <body class="survey-bg min-h-screen flex items-center justify-center p-6">
@@ -41,23 +41,11 @@
 
             <div class="text-center py-4">
                 <p class="font-bold text-gray-700 mb-6">How was your visit today?</p>
-                <div class="flex justify-center gap-6">
-                    <!-- Very Happy -->
-                    <button type="button" data-value="very-happy" class="emoji-btn">
-                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-4-11h1.5l1.5 1.5 1.5-1.5H16l-2.5 3 2.5 3h-1.5l-1.5-1.5-1.5 1.5H8l2.5-3-2.5-3z" transform="scale(0.8) translate(3 3)"></path><path d="M12 17.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
-                    </button>
-                    <!-- Happy -->
-                    <button type="button" data-value="happy" class="emoji-btn">
-                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><circle cx="9" cy="9" r="1.5"/><circle cx="15" cy="9" r="1.5"/></svg>
-                    </button>
-                    <!-- Unhappy -->
-                    <button type="button" data-value="unhappy" class="emoji-btn">
-                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 16s1.5-1 4-1 4 1 4 1"/><circle cx="9" cy="9" r="1.2"/><circle cx="15" cy="9" r="1.2"/></svg>
-                    </button>
-                    <!-- Very Unhappy -->
-                    <button type="button" data-value="very-unhappy" class="emoji-btn">
-                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 17s1.5-2 4-2 4 2 4 2"/><path d="M9 7l2 2m0-2l-2 2m4 0l2-2m-2 0l2 2"/></svg>
-                    </button>
+                <div class="flex justify-center gap-4">
+                    <button type="button" data-value="very-happy" class="emoji-btn"><svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="15"/><path fill="white" d="M30 40 Q50 35 70 40 Q50 65 30 40z"/></svg></button>
+                    <button type="button" data-value="happy" class="emoji-btn"><svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="15"/><path fill="white" d="M30 45 Q50 40 70 45 Q50 55 30 45z"/></svg></button>
+                    <button type="button" data-value="unhappy" class="emoji-btn"><svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="15"/><path fill="white" d="M30 55 Q50 50 70 55 Q50 45 30 55z"/></svg></button>
+                    <button type="button" data-value="very-unhappy" class="emoji-btn"><svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="15"/><path fill="white" d="M30 60 Q50 55 70 60 Q50 40 30 60z"/></svg></button>
                 </div>
             </div>
 
