@@ -17,6 +17,9 @@
             height: 90px;
             padding: 5px;
             border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         /* The Pulsing Effect */
@@ -28,7 +31,7 @@
         
         .active-pulse { 
             opacity: 1 !important; 
-            background-color: rgba(0,0,0,0.1);
+            background-color: rgba(0,0,0,0.05);
             animation: pulse-pop 0.6s ease-out infinite;
         }
     </style>
@@ -37,8 +40,7 @@
 
     <div class="bg-white w-full max-w-5xl rounded-3xl shadow-2xl p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
         <div class="md:col-span-2 space-y-6">
-            <!-- Stretched Logo -->
-            <img src="https://i.imgur.com/W4iMgls.jpeg" class="w-full h-14 object-cover rounded-lg shadow-sm">
+            <img src="https://i.imgur.com/W4iMgls.jpeg" class="w-full h-16 object-contain rounded-lg">
             
             <h2 class="text-2xl font-bold text-gray-800 text-center">We value your Feedback</h2>
             
@@ -50,7 +52,7 @@
                     <button type="button" data-value="very-happy" class="emoji-btn"><img src="happy-face.png" alt="Very Happy"></button>
                     <button type="button" data-value="happy" class="emoji-btn"><img src="happiness.png" alt="Happy"></button>
                     <button type="button" data-value="unhappy" class="emoji-btn"><img src="angry.png" alt="Unhappy"></button>
-                    <button type="button" data-value="very-unhappy" class="emoji-btn"><img src="angry (1).png" alt="Very Unhappy"></button>
+                    <button type="button" data-value="very-unhappy" class="emoji-btn"><img src="angry-1.png" alt="Very Unhappy"></button>
                 </div>
             </div>
 
