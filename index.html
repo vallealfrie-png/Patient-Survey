@@ -8,26 +8,33 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         .survey-bg { background-color: #038752; }
+        
         .emoji-btn { 
             transition: all 0.3s ease; 
-            opacity: 0.4; 
+            opacity: 0.3; 
             cursor: pointer; 
-            width: 85px; 
-            height: 85px;
-            fill: #64748b; 
+            font-size: 4rem; 
+            padding: 10px;
+            filter: grayscale(100%); /* Makes it look neutral/inactive */
         }
+        
         @keyframes pulse-pop {
             0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+            50% { transform: scale(1.2); }
             100% { transform: scale(1); }
         }
-        .pulse-active { opacity: 1 !important; animation: pulse-pop 0.4s ease-out; }
         
-        /* HappyOrNot Style Colors */
-        .active-very-happy { fill: #16a34a !important; }
-        .active-happy { fill: #84cc16 !important; }
-        .active-unhappy { fill: #fca5a5 !important; }
-        .active-very-unhappy { fill: #dc2626 !important; }
+        /* The "Glow" effect to force a color onto the emoji */
+        .pulse-active { 
+            opacity: 1 !important; 
+            filter: grayscale(0%) !important;
+            animation: pulse-pop 0.4s ease-out;
+        }
+
+        .active-very-happy { filter: drop-shadow(0 0 15px #16a34a) grayscale(0%); }
+        .active-happy { filter: drop-shadow(0 0 15px #84cc16) grayscale(0%); }
+        .active-unhappy { filter: drop-shadow(0 0 15px #fca5a5) grayscale(0%); }
+        .active-very-unhappy { filter: drop-shadow(0 0 15px #dc2626) grayscale(0%); }
     </style>
 </head>
 <body class="survey-bg min-h-screen flex items-center justify-center p-6">
@@ -42,10 +49,10 @@
             <div class="text-center py-4">
                 <p class="font-bold text-gray-700 mb-6">How was your visit today?</p>
                 <div class="flex justify-center gap-4">
-                    <button type="button" data-value="very-happy" class="emoji-btn"><svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="15"/><path fill="white" d="M30 40 Q50 35 70 40 Q50 65 30 40z"/></svg></button>
-                    <button type="button" data-value="happy" class="emoji-btn"><svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="15"/><path fill="white" d="M30 45 Q50 40 70 45 Q50 55 30 45z"/></svg></button>
-                    <button type="button" data-value="unhappy" class="emoji-btn"><svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="15"/><path fill="white" d="M30 55 Q50 50 70 55 Q50 45 30 55z"/></svg></button>
-                    <button type="button" data-value="very-unhappy" class="emoji-btn"><svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="15"/><path fill="white" d="M30 60 Q50 55 70 60 Q50 40 30 60z"/></svg></button>
+                    <button type="button" data-value="very-happy" class="emoji-btn">😁</button>
+                    <button type="button" data-value="happy" class="emoji-btn">🙂</button>
+                    <button type="button" data-value="unhappy" class="emoji-btn">🙁</button>
+                    <button type="button" data-value="very-unhappy" class="emoji-btn">☹️</button>
                 </div>
             </div>
 
@@ -79,7 +86,7 @@
 
         document.getElementById('submitBtn').addEventListener('click', async () => {
             const selected = document.querySelector('.pulse-active');
-            if (!selected) return alert('Please select a rating!');
+            if (!selected) return alert('Please select a face!');
             
             const { error } = await window.surveyClient.from('patient_feedback').insert([{ 
                 patient_id: document.getElementById('patientId').value, 
