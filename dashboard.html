@@ -27,12 +27,11 @@
                 <option value="ALL">All Months</option>
                 <option value="01">January</option><option value="02">February</option>
                 <option value="03">March</option><option value="04">April</option>
-                <option value="05">May</option><option value="06">June</option>
             </select>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-            <div id="card-total" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 transition hover:scale-105"><h3 class="text-[10px] uppercase font-bold text-slate-400">Total</h3><p id="total-count" class="text-3xl font-black">0</p></div>
+            <div id="card-total" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100"><h3 class="text-[10px] uppercase font-bold text-slate-400">Total</h3><p id="total-count" class="text-3xl font-black">0</p></div>
             <div onclick="setSort('very-happy')" id="card-very-happy" class="bg-white p-6 rounded-2xl shadow-sm border-2 border-emerald-500 cursor-pointer transition hover:scale-105"><h3 class="text-[10px] uppercase font-bold text-emerald-600">Very Happy</h3><p id="very-happy-count" class="text-3xl font-black text-emerald-800">0</p></div>
             <div onclick="setSort('happy')" id="card-happy" class="bg-white p-6 rounded-2xl shadow-sm border-2 border-lime-500 cursor-pointer transition hover:scale-105"><h3 class="text-[10px] uppercase font-bold text-lime-600">Happy</h3><p id="happy-count" class="text-3xl font-black text-lime-800">0</p></div>
             <div onclick="setSort('unhappy')" id="card-unhappy" class="bg-white p-6 rounded-2xl shadow-sm border-2 border-orange-500 cursor-pointer transition hover:scale-105"><h3 class="text-[10px] uppercase font-bold text-orange-600">Unhappy</h3><p id="unhappy-count" class="text-3xl font-black text-orange-800">0</p></div>
@@ -41,7 +40,7 @@
 
         <div class="grid grid-cols-3 gap-8">
             <div class="col-span-2 bg-white p-6 rounded-3xl shadow-sm border"><div id="chart-container" class="h-80 w-full"></div></div>
-            <div class="bg-white p-6 rounded-3xl shadow-sm border"><h3 id="leaderboard-title" class="text-[10px] font-black text-slate-400 uppercase mb-4">Department Breakdown</h3><div id="leaderboard-list" class="space-y-3"></div></div>
+            <div class="bg-white p-6 rounded-3xl shadow-sm border"><h3 id="leaderboard-title" class="text-[10px] font-black text-slate-400 uppercase mb-4">Leaderboard</h3><div id="leaderboard-list" class="space-y-3"></div></div>
         </div>
     </main>
 
@@ -50,7 +49,7 @@
         let allData = [], currentDept = 'ALL DEPARTMENTS', currentSort = 'very-happy';
 
         function animateValue(id, end, duration) {
-            let obj = document.getElementById(id), start = 0, range = end - start, stepTime = Math.max(Math.floor(duration / range), 50);
+            let obj = document.getElementById(id), range = end, stepTime = Math.max(Math.floor(duration / (range || 1)), 50);
             let startTime = new Date().getTime(), endTime = startTime + duration, timer = setInterval(() => {
                 let now = new Date().getTime(), remaining = Math.max((endTime - now) / duration, 0), value = Math.round(end - (remaining * range));
                 obj.innerHTML = value;
@@ -73,13 +72,8 @@
             
             const createBtn = (name, val) => {
                 const btn = document.createElement('button');
-                btn.innerText = name;
-                btn.className = "dept-btn w-full text-left p-3 hover:bg-slate-200 rounded-lg font-semibold transition";
-                btn.onclick = () => { 
-                    document.querySelectorAll('.dept-btn').forEach(b => b.classList.remove('dept-active'));
-                    btn.classList.add('dept-active');
-                    currentDept = val; updateView(); 
-                };
+                btn.innerText = name; btn.className = "dept-btn w-full text-left p-3 hover:bg-slate-200 rounded-lg font-semibold transition";
+                btn.onclick = () => { document.querySelectorAll('.dept-btn').forEach(b => b.classList.remove('dept-active')); btn.classList.add('dept-active'); currentDept = val; updateView(); };
                 list.appendChild(btn);
             };
             createBtn("ALL DEPARTMENTS", "ALL DEPARTMENTS");
@@ -94,20 +88,27 @@
             if (month !== 'ALL') filtered = filtered.filter(d => new Date(d.created_at).getMonth() + 1 === parseInt(month));
 
             document.getElementById('header-title').innerText = currentDept;
-            const getC = (t) => filtered.filter(d => String(d.feedback_type).toLowerCase() === t.toLowerCase()).length;
-            const vals = [getC('very-happy'), getC('happy'), getC('unhappy'), getC('very-unhappy')];
+            const getC = (t, data) => data.filter(d => String(d.feedback_type).toLowerCase() === t.toLowerCase()).length;
+            const vals = [getC('very-happy', filtered), getC('happy', filtered), getC('unhappy', filtered), getC('very-unhappy', filtered)];
             
             ['total-count', 'very-happy-count', 'happy-count', 'unhappy-count', 'very-unhappy-count'].forEach((id, i) => animateValue(id, [filtered.length, ...vals][i], 1000));
 
-            const categories = ['Very Happy', 'Happy', 'Unhappy', 'Very Unhappy'];
-            document.getElementById('leaderboard-list').innerHTML = (currentDept === 'ALL DEPARTMENTS') 
-                ? "Select a department to view detailed breakdown."
-                : categories.map((cat, i) => `<div class="flex justify-between p-2 bg-slate-50 rounded font-bold text-sm"><span>${cat}</span><span class="text-indigo-600">${vals[i]}</span></div>`).join('');
+            // Leaderboard Logic
+            if (currentDept === 'ALL DEPARTMENTS') {
+                document.getElementById('leaderboard-title').innerText = "Top Departments";
+                const depts = [...new Set(allData.map(d => d.device_id))];
+                const sorted = depts.map(d => ({ name: d, count: allData.filter(i => i.device_id === d && i.feedback_type.toLowerCase() === currentSort.toLowerCase()).length }))
+                                  .sort((a, b) => b.count - a.count);
+                document.getElementById('leaderboard-list').innerHTML = sorted.map(l => `<div class="flex justify-between p-2 bg-slate-50 rounded font-bold text-sm"><span>${l.name}</span><span class="text-indigo-600">${l.count}</span></div>`).join('');
+            } else {
+                document.getElementById('leaderboard-title').innerText = currentDept + " Performance";
+                document.getElementById('leaderboard-list').innerHTML = `<div class="flex justify-between p-2 bg-slate-50 rounded font-bold text-sm"><span>${currentSort.replace('-', ' ')}</span><span class="text-indigo-600">${getC(currentSort, filtered)}</span></div>`;
+            }
 
             Highcharts.chart('chart-container', {
                 chart: { type: 'column', options3d: { enabled: true, alpha: 10, beta: 25, depth: 70 } },
-                title: { text: `Feedback: ${currentDept}` },
-                xAxis: { categories: categories },
+                title: { text: `Feedback Distribution: ${currentDept}` },
+                xAxis: { categories: ['V.Happy', 'Happy', 'Unhappy', 'V.Unhappy'] },
                 series: [{ name: 'Count', data: vals.map((v, i) => ({ y: v, color: ['#10b981', '#84cc16', '#fb923c', '#ef4444'][i] })) }],
                 credits: { enabled: false }
             });
