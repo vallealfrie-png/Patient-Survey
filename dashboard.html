@@ -19,6 +19,10 @@
             <option value="ALL">All Months</option>
             <option value="01">January</option><option value="02">February</option>
             <option value="03">March</option><option value="04">April</option>
+            <option value="05">May</option><option value="06">June</option>
+            <option value="07">July</option><option value="08">August</option>
+            <option value="09">September</option><option value="10">October</option>
+            <option value="11">November</option><option value="12">December</option>
         </select>
     </aside>
 
@@ -45,9 +49,9 @@
 
         async function init() {
             const { data } = await client.from('patient_feedback').select('feedback_type, device_id, created_at');
-            allData = data;
+            allData = data || [];
             
-            const depts = [...new Set(data.map(d => d.device_id))];
+            const depts = [...new Set(allData.map(d => d.device_id))];
             const list = document.getElementById('dept-list');
             
             const allBtn = document.createElement('button');
@@ -70,12 +74,14 @@
 
         function updateView() {
             const month = document.getElementById('month-selector').value;
+            const monthName = document.getElementById('month-selector').options[document.getElementById('month-selector').selectedIndex].text;
+            
             let filtered = allData;
-
             if (currentDept !== 'ALL DEPARTMENTS') filtered = filtered.filter(d => d.device_id === currentDept);
             if (month !== 'ALL') filtered = filtered.filter(d => new Date(d.created_at).getMonth() + 1 === parseInt(month));
 
             document.getElementById('header-title').innerText = currentDept;
+            const timeContext = month === 'ALL' ? 'All-time' : monthName;
             
             const getC = (t) => filtered.filter(d => String(d.feedback_type).toLowerCase() === t.toLowerCase()).length;
             const vals = [getC('very-happy'), getC('happy'), getC('unhappy'), getC('very-unhappy')];
@@ -88,6 +94,7 @@
 
             Highcharts.chart('chart-container', {
                 chart: { type: 'column', options3d: { enabled: true, alpha: 10, beta: 25, depth: 70 } },
+                title: { text: `Feedback Distribution: ${currentDept} (${timeContext})` },
                 xAxis: { categories: ['Very Happy', 'Happy', 'Unhappy', 'Very Unhappy'] },
                 series: [{ 
                     name: 'Count', 
