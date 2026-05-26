@@ -11,35 +11,26 @@
 <body class="bg-slate-50 flex h-screen overflow-hidden">
 
     <aside class="w-80 bg-white border-r border-slate-200 p-6 shadow-sm overflow-y-auto">
-        <h2 class="text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase mb-8">Departments</h2>
-        <div id="dept-list" class="space-y-2">
-            </div>
+        <h2 class="text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase mb-6">Department</h2>
+        <div id="dept-list" class="space-y-2 mb-8"></div>
+        
+        <h2 class="text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase mb-6">Month</h2>
+        <select id="month-selector" class="w-full p-3 bg-slate-100 rounded-lg font-bold text-sm">
+            <option value="ALL">All Months</option>
+            <option value="01">January</option><option value="02">February</option>
+            <option value="03">March</option><option value="04">April</option>
+        </select>
     </aside>
 
     <main class="flex-1 p-8 overflow-y-auto">
         <h1 id="header-title" class="text-3xl font-black italic text-indigo-600 mb-8">ALL DEPARTMENTS</h1>
 
         <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <h3 class="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Total</h3>
-                <p id="total-count" class="text-3xl font-black text-slate-800">0</p>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-emerald-100">
-                <h3 class="text-[10px] uppercase font-bold text-emerald-600 tracking-widest">Very Happy</h3>
-                <p id="very-happy-count" class="text-3xl font-black text-emerald-800">0</p>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-lime-100">
-                <h3 class="text-[10px] uppercase font-bold text-lime-600 tracking-widest">Happy</h3>
-                <p id="happy-count" class="text-3xl font-black text-lime-800">0</p>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-orange-100">
-                <h3 class="text-[10px] uppercase font-bold text-orange-600 tracking-widest">Unhappy</h3>
-                <p id="unhappy-count" class="text-3xl font-black text-orange-800">0</p>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-red-100">
-                <h3 class="text-[10px] uppercase font-bold text-red-600 tracking-widest">Very Unhappy</h3>
-                <p id="very-unhappy-count" class="text-3xl font-black text-red-800">0</p>
-            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100"><h3 class="text-[10px] uppercase font-bold text-slate-400">Total</h3><p id="total-count" class="text-3xl font-black">0</p></div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-emerald-100"><h3 class="text-[10px] uppercase font-bold text-emerald-600">Very Happy</h3><p id="very-happy-count" class="text-3xl font-black text-emerald-800">0</p></div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-lime-100"><h3 class="text-[10px] uppercase font-bold text-lime-600">Happy</h3><p id="happy-count" class="text-3xl font-black text-lime-800">0</p></div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-orange-100"><h3 class="text-[10px] uppercase font-bold text-orange-600">Unhappy</h3><p id="unhappy-count" class="text-3xl font-black text-orange-800">0</p></div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-red-100"><h3 class="text-[10px] uppercase font-bold text-red-600">Very Unhappy</h3><p id="very-unhappy-count" class="text-3xl font-black text-red-800">0</p></div>
         </div>
 
         <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
@@ -48,54 +39,60 @@
     </main>
 
     <script>
-        const SUPABASE_URL = 'https://cqwicgpyxxkwyvnckgeh.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw';
-        const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const client = window.supabase.createClient('https://cqwicgpyxxkwyvnckgeh.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw');
         
-        let allData = [];
+        let allData = [], currentDept = 'ALL DEPARTMENTS';
 
         async function init() {
-            const { data } = await client.from('patient_feedback').select('feedback_type, device_id');
-            if (!data) return;
+            const { data } = await client.from('patient_feedback').select('feedback_type, device_id, created_at');
             allData = data;
-
-            // Generate Sidebar Buttons
+            
             const depts = [...new Set(data.map(d => d.device_id))];
             const list = document.getElementById('dept-list');
             
             const allBtn = document.createElement('button');
             allBtn.innerText = "ALL DEPARTMENTS";
             allBtn.className = "w-full text-left p-3 bg-indigo-600 text-white rounded-lg font-bold";
-            allBtn.onclick = () => updateView('ALL DEPARTMENTS', allData);
+            allBtn.onclick = () => { currentDept = 'ALL DEPARTMENTS'; updateView(); };
             list.appendChild(allBtn);
 
             depts.forEach(dept => {
                 const btn = document.createElement('button');
                 btn.innerText = dept;
                 btn.className = "w-full text-left p-3 hover:bg-slate-100 rounded-lg font-semibold transition";
-                btn.onclick = () => updateView(dept, allData.filter(d => d.device_id === dept));
+                btn.onclick = () => { currentDept = dept; updateView(); };
                 list.appendChild(btn);
             });
 
-            updateView('ALL DEPARTMENTS', allData);
+            document.getElementById('month-selector').onchange = updateView;
+            updateView();
         }
 
-        function updateView(deptName, filteredData) {
-            document.getElementById('header-title').innerText = deptName;
+        function updateView() {
+            const month = document.getElementById('month-selector').value;
+            let filtered = allData;
+
+            if (currentDept !== 'ALL DEPARTMENTS') filtered = filtered.filter(d => d.device_id === currentDept);
+            if (month !== 'ALL') filtered = filtered.filter(d => new Date(d.created_at).getMonth() + 1 === parseInt(month));
+
+            document.getElementById('header-title').innerText = currentDept;
             
-            const getCount = (type) => filteredData.filter(d => String(d.feedback_type).toLowerCase() === type.toLowerCase()).length;
+            const getC = (t) => filtered.filter(d => String(d.feedback_type).toLowerCase() === t.toLowerCase()).length;
+            const vals = [getC('very-happy'), getC('happy'), getC('unhappy'), getC('very-unhappy')];
             
-            document.getElementById('total-count').innerText = filteredData.length;
-            document.getElementById('very-happy-count').innerText = getCount('very-happy');
-            document.getElementById('happy-count').innerText = getCount('happy');
-            document.getElementById('unhappy-count').innerText = getCount('unhappy');
-            document.getElementById('very-unhappy-count').innerText = getCount('very-unhappy');
+            document.getElementById('total-count').innerText = filtered.length;
+            document.getElementById('very-happy-count').innerText = vals[0];
+            document.getElementById('happy-count').innerText = vals[1];
+            document.getElementById('unhappy-count').innerText = vals[2];
+            document.getElementById('very-unhappy-count').innerText = vals[3];
 
             Highcharts.chart('chart-container', {
                 chart: { type: 'column', options3d: { enabled: true, alpha: 10, beta: 25, depth: 70 } },
-                title: { text: `Feedback for ${deptName}` },
-                xAxis: { categories: ['V.Happy', 'Happy', 'Unhappy', 'V.Unhappy'] },
-                series: [{ name: 'Count', data: [getCount('very-happy'), getCount('happy'), getCount('unhappy'), getCount('very-unhappy')], color: '#4f46e5' }],
+                xAxis: { categories: ['Very Happy', 'Happy', 'Unhappy', 'Very Unhappy'] },
+                series: [{ 
+                    name: 'Count', 
+                    data: vals.map((v, i) => ({ y: v, color: ['#10b981', '#84cc16', '#fb923c', '#ef4444'][i] }))
+                }],
                 credits: { enabled: false }
             });
         }
