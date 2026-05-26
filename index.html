@@ -42,13 +42,12 @@
   </div>
 
   <script>
-    // 1. Initialize Supabase correctly
-    const supabase = window.supabase.createClient(
+    // FIX: Use a different variable name than 'supabase' for the client instance
+    const dbClient = supabase.createClient(
       'https://cqwicgpyxxkwyvnckgeh.supabase.co', 
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw'
     );
 
-    // 2. Password Toggle Fix
     const passInput = document.getElementById('password');
     const toggleBtn = document.getElementById('togglePassword');
     toggleBtn.addEventListener('click', () => {
@@ -56,10 +55,9 @@
       toggleBtn.textContent = (passInput.type === 'password') ? '👁️' : '🙈';
     });
 
-    // 3. Login Logic
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await dbClient.auth.signInWithPassword({
         email: document.getElementById('email').value,
         password: document.getElementById('password').value
       });
@@ -72,7 +70,7 @@
       }
     });
 
-    // 4. FULL MOLECULE ANIMATION
+    // FULL MOLECULE ANIMATION
     const canvas = document.getElementById('bg-canvas');
     const ctx = canvas.getContext('2d');
     let molecules = [];
