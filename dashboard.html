@@ -2,45 +2,74 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PHMC | Analytics</title>
+    <title>PHMC | Analytics Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
 </head>
-<body class="bg-slate-50 flex h-screen">
+<body class="bg-slate-50 flex h-screen overflow-hidden">
 
-    <aside class="w-80 bg-white border-r p-6 shadow-sm">
-        <h2 class="text-[10px] font-black text-slate-400 tracking-widest uppercase mb-6">Feedback Distribution</h2>
-        <div id="highcharts-container" class="h-96"></div>
+    <aside class="w-80 bg-white border-r border-slate-200 p-6 flex flex-col shadow-sm">
+        <h2 class="text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase mb-8">Feedback Breakdown</h2>
+        <div id="highcharts-container" class="flex-grow"></div>
     </aside>
 
-    <main class="flex-1 p-8">
-        <h1 class="text-2xl font-black italic text-indigo-600 mb-6">PHMC OVERVIEW</h1>
-        <div id="total-card" class="bg-white p-6 rounded-2xl shadow-sm w-48 border">
-            <h3 class="text-[10px] font-bold text-slate-400 uppercase">Total Feedback</h3>
-            <p id="total-count" class="text-3xl font-black">0</p>
+    <main class="flex-1 p-8 overflow-y-auto">
+        <h1 class="text-3xl font-black italic text-indigo-600 mb-8">PHMC OVERVIEW</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <h3 class="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Total</h3>
+                <p id="total-count" class="text-3xl font-black text-slate-800">0</p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-emerald-100">
+                <h3 class="text-[10px] uppercase font-bold text-emerald-600 tracking-widest">Very Happy</h3>
+                <p id="very-happy-count" class="text-3xl font-black text-emerald-800">0</p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-lime-100">
+                <h3 class="text-[10px] uppercase font-bold text-lime-600 tracking-widest">Happy</h3>
+                <p id="happy-count" class="text-3xl font-black text-lime-800">0</p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-orange-100">
+                <h3 class="text-[10px] uppercase font-bold text-orange-600 tracking-widest">Unhappy</h3>
+                <p id="unhappy-count" class="text-3xl font-black text-orange-800">0</p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-red-100">
+                <h3 class="text-[10px] uppercase font-bold text-red-600 tracking-widest">Very Unhappy</h3>
+                <p id="very-unhappy-count" class="text-3xl font-black text-red-800">0</p>
+            </div>
         </div>
     </main>
 
     <script>
-        const client = supabase.createClient('https://cqwicgpyxxkwyvnckgeh.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw');
+        const SUPABASE_URL = 'https://cqwicgpyxxkwyvnckgeh.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw';
+        const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         async function init() {
-            const { data } = await client.from('patient_feedback').select('feedback_type');
-            if (!data) return;
+            const { data, error } = await client.from('patient_feedback').select('feedback_type');
+            if (error || !data) return;
 
-            // Update Count
+            // 1. Update Score Cards
+            const getCount = (type) => data.filter(d => String(d.feedback_type).toLowerCase() === type.toLowerCase()).length;
+            
             document.getElementById('total-count').innerText = data.length;
+            document.getElementById('very-happy-count').innerText = getCount('very-happy');
+            document.getElementById('happy-count').innerText = getCount('happy');
+            document.getElementById('unhappy-count').innerText = getCount('unhappy');
+            document.getElementById('very-unhappy-count').innerText = getCount('very-unhappy');
 
-            // Update Chart
-            const types = ['very-happy', 'happy', 'unhappy', 'very-unhappy'];
-            const counts = types.map(t => data.filter(d => d.feedback_type === t).length);
-
+            // 2. Render Sidebar Chart
             Highcharts.chart('highcharts-container', {
                 chart: { type: 'column', backgroundColor: 'transparent' },
                 title: { text: '' },
-                xAxis: { categories: ['Very Happy', 'Happy', 'Unhappy', 'Very Unhappy'] },
-                series: [{ name: 'Count', data: counts, color: '#6366f1' }],
+                xAxis: { categories: ['V.Happy', 'Happy', 'Unhappy', 'V.Unhappy'] },
+                yAxis: { title: { text: '' } },
+                series: [{ 
+                    name: 'Count', 
+                    data: [getCount('very-happy'), getCount('happy'), getCount('unhappy'), getCount('very-unhappy')],
+                    color: '#4f46e5' 
+                }],
                 credits: { enabled: false }
             });
         }
