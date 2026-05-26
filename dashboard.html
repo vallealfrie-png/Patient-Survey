@@ -8,8 +8,8 @@
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/highcharts-3d.js"></script>
     <style>
-        .pulse-active { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .7; } }
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.02); } }
+        .pulse-active { animation: pulse 1.5s ease-in-out infinite; border: 2px solid #4f46e5 !important; }
         .dept-active { background-color: #4f46e5 !important; color: white !important; }
     </style>
 </head>
@@ -78,7 +78,11 @@
             const createBtn = (name, val) => {
                 const btn = document.createElement('button');
                 btn.innerText = name; btn.className = "dept-btn w-full text-left p-3 hover:bg-slate-200 rounded-lg font-semibold transition";
-                btn.onclick = () => { document.querySelectorAll('.dept-btn').forEach(b => b.classList.remove('dept-active')); btn.classList.add('dept-active'); currentDept = val; showAll = false; updateView(); };
+                btn.onclick = () => { 
+                    document.querySelectorAll('.dept-btn').forEach(b => b.classList.remove('dept-active', 'pulse-active')); 
+                    btn.classList.add('dept-active', 'pulse-active'); 
+                    currentDept = val; showAll = false; updateView(); 
+                };
                 list.appendChild(btn);
             };
             createBtn("ALL DEPARTMENTS", "ALL DEPARTMENTS");
@@ -97,7 +101,6 @@
             const vals = [getC('very-happy', filtered), getC('happy', filtered), getC('unhappy', filtered), getC('very-unhappy', filtered)];
             ['total-count', 'very-happy-count', 'happy-count', 'unhappy-count', 'very-unhappy-count'].forEach((id, i) => animateValue(id, [filtered.length, ...vals][i], 1000));
 
-            // Leaderboard Logic
             const btn = document.getElementById('see-more-btn');
             if (currentDept === 'ALL DEPARTMENTS') {
                 document.getElementById('leaderboard-title').innerText = "Top Departments";
@@ -105,19 +108,18 @@
                 const sorted = depts.map(d => ({ name: d, count: allData.filter(i => i.device_id === d && i.feedback_type.toLowerCase() === currentSort.toLowerCase()).length }))
                                   .filter(item => item.count > 0)
                                   .sort((a, b) => b.count - a.count);
-                
                 btn.classList.toggle('hidden', sorted.length <= 10);
                 const display = showAll ? sorted : sorted.slice(0, 10);
                 document.getElementById('leaderboard-list').innerHTML = display.map(l => `<div class="flex justify-between p-2 bg-slate-50 rounded font-bold text-sm"><span>${l.name}</span><span class="text-indigo-600">${l.count}</span></div>`).join('');
             } else {
-                document.getElementById('leaderboard-title').innerText = "Selected Category Count";
+                document.getElementById('leaderboard-title').innerText = currentDept + " Performance";
                 btn.classList.add('hidden');
                 document.getElementById('leaderboard-list').innerHTML = `<div class="flex justify-between p-2 bg-slate-50 rounded font-bold text-sm"><span>${currentSort.replace('-', ' ')}</span><span class="text-indigo-600">${getC(currentSort, filtered)}</span></div>`;
             }
 
             Highcharts.chart('chart-container', {
                 chart: { type: 'column', options3d: { enabled: true, alpha: 10, beta: 25, depth: 70 } },
-                title: { text: `Feedback Distribution: ${currentDept}` },
+                title: { text: `Feedback: ${currentDept}` },
                 xAxis: { categories: ['V.Happy', 'Happy', 'Unhappy', 'V.Unhappy'] },
                 series: [{ name: 'Count', data: vals.map((v, i) => ({ y: v, color: ['#10b981', '#84cc16', '#fb923c', '#ef4444'][i] })) }],
                 credits: { enabled: false }
