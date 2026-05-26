@@ -2,29 +2,39 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PHMC | Patient Satisfaction Analytics</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHMC | Patient Satisfaction Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-container { position: relative; height: 300px; width: 100%; }
+        .card { background: white; border-radius: 2.5rem; padding: 2rem; box-shadow: 0 20px 50px rgba(0,0,0,0.05); }
+    </style>
 </head>
-<body class="bg-slate-50 p-8">
-    <h1 class="text-3xl font-black mb-8 italic text-slate-800">PATIENT SATISFACTION ANALYTICS 🏥</h1>
-    
+<body class="bg-slate-50 font-sans text-slate-900 p-8">
+
+    <h1 class="text-3xl font-black mb-10 italic text-indigo-600 tracking-tighter">PATIENT SATISFACTION ANALYTICS</h1>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div class="bg-white p-6 rounded-3xl shadow-xl">
-            <h4 class="text-xs font-black text-slate-400 uppercase tracking-[0.4em] mb-6">By Department</h4>
-            <canvas id="deptChart" height="200"></canvas>
+        <div class="card">
+            <h4 class="text-xs font-black text-slate-400 uppercase tracking-[0.4em] mb-8">Satisfaction by Department</h4>
+            <div class="chart-container"><canvas id="deptChart"></canvas></div>
         </div>
-        <div class="bg-white p-6 rounded-3xl shadow-xl">
-            <h4 class="text-xs font-black text-slate-400 uppercase tracking-[0.4em] mb-6">Feedback Trend (Emoji Sentiment)</h4>
-            <canvas id="trendChart" height="200"></canvas>
+
+        <div class="card">
+            <h4 class="text-xs font-black text-slate-400 uppercase tracking-[0.4em] mb-8">Feedback Trends</h4>
+            <div class="chart-container"><canvas id="trendChart"></canvas></div>
         </div>
     </div>
 
     <script>
-        const SB_URL = 'https://cqwicgpyxxkwyvnckgeh.supabase.co';
-        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw';
-        const supabase = supabase.createClient(SB_URL, SB_KEY);
+        // 1. CONFIG: Your credentials
+        const SUPABASE_URL = 'https://cqwicgpyxxkwyvnckgeh.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw';
+        
+        // 2. INITIALIZE: Use a distinct name to avoid conflict with CDN
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const emojiMap = {
             'very-happy': '🤩',
@@ -33,20 +43,23 @@
             'very-unhappy': '😡'
         };
 
-        async function initDashboard() {
-            const { data, error } = await supabase
+        async function loadDashboard() {
+            const { data, error } = await supabaseClient
                 .from('patient_feedback')
-                .select('device_id, feedback_type, created_at');
+                .select('feedback_type, device_id, created_at');
 
-            if (error) return console.error(error);
+            if (error) { 
+                console.error("Supabase Error:", error); 
+                return; 
+            }
 
             renderDeptChart(data);
             renderTrendChart(data);
         }
 
         function renderDeptChart(data) {
-            const counts = data.reduce((acc, curr) => {
-                acc[curr.device_id] = (acc[curr.device_id] || 0) + 1;
+            const counts = data.reduce((acc, row) => {
+                acc[row.device_id] = (acc[row.device_id] || 0) + 1;
                 return acc;
             }, {});
 
@@ -57,16 +70,17 @@
                     datasets: [{
                         label: 'Total Feedback',
                         data: Object.values(counts),
-                        backgroundColor: '#6366f1'
+                        backgroundColor: '#6366f1',
+                        borderRadius: 8
                     }]
-                }
+                },
+                options: { responsive: true, maintainAspectRatio: false }
             });
         }
 
         function renderTrendChart(data) {
-            // Group by month
-            const trends = data.reduce((acc, curr) => {
-                const month = curr.created_at.slice(0, 7);
+            const trendData = data.reduce((acc, row) => {
+                const month = row.created_at.substring(0, 7);
                 acc[month] = (acc[month] || 0) + 1;
                 return acc;
             }, {});
@@ -74,18 +88,22 @@
             new Chart(document.getElementById('trendChart'), {
                 type: 'line',
                 data: {
-                    labels: Object.keys(trends),
+                    labels: Object.keys(trendData),
                     datasets: [{
                         label: 'Feedback Volume',
-                        data: Object.values(trends),
-                        borderColor: '#2dd4bf',
-                        tension: 0.4
+                        data: Object.values(trendData),
+                        borderColor: '#10b981',
+                        tension: 0.3,
+                        fill: true,
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)'
                     }]
-                }
+                },
+                options: { responsive: true, maintainAspectRatio: false }
             });
         }
 
-        initDashboard();
+        // Run on load
+        loadDashboard();
     </script>
 </body>
 </html>
