@@ -36,7 +36,7 @@
         
         /* Advertisement Styles */
         #ad-container {
-            height: 500px; /* Fixed height for consistent sliding */
+            height: 500px; 
             background-color: #f3f4f6;
             display: flex;
             align-items: center;
@@ -46,7 +46,7 @@
         #ad-slide {
             width: 100%;
             height: 100%;
-            object-fit: contain; /* Prevents cropping */
+            object-fit: contain; 
             transition: opacity 1s ease-in-out;
         }
     </style>
@@ -85,10 +85,13 @@
 
     <script>
         // Supabase Initialization
-        window.surveyClient = window.surveyClient || supabase.createClient(
+        const dbClient = supabase.createClient(
             'https://cqwicgpyxxkwyvnckgeh.supabase.co',
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw'
         );
+
+        // Retrieve Department saved during Login
+        const userDept = localStorage.getItem('user_department') || "Unknown";
 
         // Emoji Selection Logic
         document.querySelectorAll('.emoji-btn').forEach(btn => {
@@ -108,7 +111,6 @@
 
         let currentIndex = 0;
         const adSlide = document.getElementById('ad-slide');
-
         setInterval(() => {
             currentIndex = (currentIndex + 1) % images.length;
             adSlide.style.opacity = 0; 
@@ -123,11 +125,11 @@
             const selected = document.querySelector('.active-pulse');
             if (!selected) return alert('Please select a face!');
             
-            const { error } = await window.surveyClient.from('patient_feedback').insert([{ 
+            const { error } = await dbClient.from('patient_feedback').insert([{ 
                 patient_id: document.getElementById('patientId').value, 
                 feedback_type: selected.getAttribute('data-value'), 
                 comment: document.getElementById('comment').value,
-                device_id: 'Tablet-01' 
+                device_id: userDept // Automatically logs the department set during login
             }]);
             
             if (error) alert('Error: ' + error.message);
