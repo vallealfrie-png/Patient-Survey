@@ -10,7 +10,7 @@
     :root { --corp-green: #007941; --corp-light: #10b981; --glass-bg: rgba(255, 255, 255, 0.08); --glass-border: rgba(255, 255, 255, 0.2); }
     body { margin: 0; padding: 0; overflow: hidden; background: radial-gradient(circle at center, #064e3b 0%, #022c22 100%); font-family: ui-sans-serif, system-ui; min-height: 100vh; display: flex; align-items: center; justify-content: center; perspective: 1200px; }
     #bg-canvas { position: fixed; top: 0; left: 0; z-index: -1; pointer-events: none; }
-    .glass-card { position: relative; width: 100%; max-width: 380px; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 2.5rem; padding: 2.5rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); opacity: 0; transform: translateZ(-300px) scale(0.3); animation: cardProject 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; overflow: hidden; }
+    .glass-card { position: relative; width: 100%; max-width: 380px; background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 2.5rem; padding: 2.5rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); opacity: 0; transform: translateZ(-300px) scale(0.3); animation: cardProject 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; overflow: hidden; }
     .glass-card::after { content: ""; position: absolute; top: -100%; left: 0; width: 100%; height: 4px; background: linear-gradient(to bottom, transparent, var(--corp-light), transparent); animation: scan 4s linear infinite; box-shadow: 0 0 15px var(--corp-light); }
     @keyframes scan { 0% { top: -10%; } 100% { top: 110%; } }
     @keyframes cardProject { to { opacity: 1; transform: translateZ(0px) scale(1); } }
@@ -19,9 +19,11 @@
   </style>
 </head>
 <body>
+
   <canvas id="bg-canvas"></canvas>
+
   <div class="glass-card">
-    <div class="flex justify-center mb-6"><img src="https://i.imgur.com/VbZKWAf.png" class="h-16 w-auto object-contain brightness-110" /></div>
+    <div class="flex justify-center mb-6"><img src="https://i.imgur.com/VbZKWAf.png" alt="Logo" class="h-16 w-auto object-contain brightness-110" /></div>
     <form id="login-form" class="space-y-5">
       <div>
         <label class="block pl-1 text-[9px] font-bold text-emerald-500 uppercase tracking-widest mb-2">Identifier</label>
@@ -34,16 +36,19 @@
           <button type="button" id="togglePassword" class="absolute right-4 top-3 text-emerald-400">👁️</button>
         </div>
       </div>
-      <button type="submit" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all text-xs uppercase tracking-widest">Initialize Login</button>
+      <button type="submit" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all text-xs uppercase tracking-widest shadow-lg active:scale-95">Initialize Login</button>
     </form>
     <p id="error" class="hidden text-red-400 text-center mt-4 text-[10px] bg-red-900/20 p-2 rounded-lg"></p>
   </div>
 
   <script>
-    // Initialize Supabase with your credentials
-    const supabase = supabase.createClient('https://cqwicgpyxxkwyvnckgeh.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw');
+    // 1. Initialize Supabase correctly
+    const supabase = window.supabase.createClient(
+      'https://cqwicgpyxxkwyvnckgeh.supabase.co', 
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw'
+    );
 
-    // Toggle Password
+    // 2. Password Toggle Fix
     const passInput = document.getElementById('password');
     const toggleBtn = document.getElementById('togglePassword');
     toggleBtn.addEventListener('click', () => {
@@ -51,7 +56,7 @@
       toggleBtn.textContent = (passInput.type === 'password') ? '👁️' : '🙈';
     });
 
-    // Login Logic
+    // 3. Login Logic
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const { error } = await supabase.auth.signInWithPassword({
@@ -67,7 +72,7 @@
       }
     });
 
-    // Molecule Animation (Exact Copy)
+    // 4. FULL MOLECULE ANIMATION
     const canvas = document.getElementById('bg-canvas');
     const ctx = canvas.getContext('2d');
     let molecules = [];
@@ -78,7 +83,7 @@
       draw() { ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle); ctx.scale(this.scale, this.scale); ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 2; this.bonds.forEach(b => { ctx.beginPath(); ctx.moveTo(this.structure[b[0]].x, this.structure[b[0]].y); ctx.lineTo(this.structure[b[1]].x, this.structure[b[1]].y); ctx.stroke(); }); this.structure.forEach(a => { ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, Math.PI*2); ctx.fillStyle = a.color; ctx.fill(); }); ctx.restore(); }
       update() { this.x += this.vx; this.y += this.vy; this.angle += this.rotationSpeed; if(this.x > canvas.width+100) this.x = -100; else if(this.x < -100) this.x = canvas.width+100; if(this.y > canvas.height+100) this.y = -100; else if(this.y < -100) this.y = canvas.height+100; }
     }
-    function initMolecules() { molecules = []; for(let i=0; i<Math.floor((canvas.width*canvas.height)/45000); i++) molecules.push(new Molecule()); }
+    function initMolecules() { molecules = []; const density = window.innerWidth < 640 ? 60000 : 45000; for(let i=0; i<Math.floor((canvas.width*canvas.height)/density); i++) molecules.push(new Molecule()); }
     function animate() { ctx.clearRect(0,0, canvas.width, canvas.height); molecules.forEach(m => { m.update(); m.draw(); }); requestAnimationFrame(animate); }
     window.addEventListener('resize', resize); resize(); animate();
   </script>
