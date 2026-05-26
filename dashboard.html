@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PHMC | 3D Analytics Dashboard</title>
+    <title>PHMC | Interactive Analytics</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
@@ -10,15 +10,14 @@
 </head>
 <body class="bg-slate-50 flex h-screen overflow-hidden">
 
-    <aside class="w-80 bg-white border-r border-slate-200 p-6 shadow-sm">
-        <h2 class="text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase mb-8">System Status</h2>
-        <div class="p-4 bg-indigo-50 rounded-xl text-indigo-800 text-sm font-bold">
-            Live Feed: Connected
-        </div>
+    <aside class="w-80 bg-white border-r border-slate-200 p-6 shadow-sm overflow-y-auto">
+        <h2 class="text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase mb-8">Departments</h2>
+        <div id="dept-list" class="space-y-2">
+            </div>
     </aside>
 
     <main class="flex-1 p-8 overflow-y-auto">
-        <h1 class="text-3xl font-black italic text-indigo-600 mb-8">PHMC ANALYTICS</h1>
+        <h1 id="header-title" class="text-3xl font-black italic text-indigo-600 mb-8">ALL DEPARTMENTS</h1>
 
         <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
@@ -52,26 +51,50 @@
         const SUPABASE_URL = 'https://cqwicgpyxxkwyvnckgeh.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw';
         const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        let allData = [];
 
         async function init() {
-            const { data } = await client.from('patient_feedback').select('feedback_type');
+            const { data } = await client.from('patient_feedback').select('feedback_type, device_id');
             if (!data) return;
+            allData = data;
 
-            const getCount = (type) => data.filter(d => String(d.feedback_type).toLowerCase() === type.toLowerCase()).length;
+            // Generate Sidebar Buttons
+            const depts = [...new Set(data.map(d => d.device_id))];
+            const list = document.getElementById('dept-list');
             
-            // Populate Cards
-            document.getElementById('total-count').innerText = data.length;
+            const allBtn = document.createElement('button');
+            allBtn.innerText = "ALL DEPARTMENTS";
+            allBtn.className = "w-full text-left p-3 bg-indigo-600 text-white rounded-lg font-bold";
+            allBtn.onclick = () => updateView('ALL DEPARTMENTS', allData);
+            list.appendChild(allBtn);
+
+            depts.forEach(dept => {
+                const btn = document.createElement('button');
+                btn.innerText = dept;
+                btn.className = "w-full text-left p-3 hover:bg-slate-100 rounded-lg font-semibold transition";
+                btn.onclick = () => updateView(dept, allData.filter(d => d.device_id === dept));
+                list.appendChild(btn);
+            });
+
+            updateView('ALL DEPARTMENTS', allData);
+        }
+
+        function updateView(deptName, filteredData) {
+            document.getElementById('header-title').innerText = deptName;
+            
+            const getCount = (type) => filteredData.filter(d => String(d.feedback_type).toLowerCase() === type.toLowerCase()).length;
+            
+            document.getElementById('total-count').innerText = filteredData.length;
             document.getElementById('very-happy-count').innerText = getCount('very-happy');
             document.getElementById('happy-count').innerText = getCount('happy');
             document.getElementById('unhappy-count').innerText = getCount('unhappy');
             document.getElementById('very-unhappy-count').innerText = getCount('very-unhappy');
 
-            // Render 3D Chart
             Highcharts.chart('chart-container', {
                 chart: { type: 'column', options3d: { enabled: true, alpha: 10, beta: 25, depth: 70 } },
-                title: { text: 'Feedback Distribution Analysis' },
-                xAxis: { categories: ['Very Happy', 'Happy', 'Unhappy', 'Very Unhappy'] },
-                yAxis: { title: { text: 'Volume' } },
+                title: { text: `Feedback for ${deptName}` },
+                xAxis: { categories: ['V.Happy', 'Happy', 'Unhappy', 'V.Unhappy'] },
                 series: [{ name: 'Count', data: [getCount('very-happy'), getCount('happy'), getCount('unhappy'), getCount('very-unhappy')], color: '#4f46e5' }],
                 credits: { enabled: false }
             });
