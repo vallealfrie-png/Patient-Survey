@@ -3,99 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHMC | Debugging Dashboard</title>
+    <title>PHMC | Patient Satisfaction Analytics</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .chart-container { position: relative; height: 300px; width: 100%; }
-        .card { background: white; border-radius: 1.5rem; padding: 2rem; border: 1px solid #e2e8f0; }
+        .chart-container { position: relative; height: 350px; width: 100%; }
+        .card { background: white; border-radius: 1.5rem; padding: 1.5rem; border: 1px solid #e2e8f0; }
     </style>
 </head>
-<body class="bg-slate-50 p-10 font-sans">
-    <h1 class="text-2xl font-black mb-8 italic text-indigo-600">DASHBOARD DIAGNOSTICS</h1>
-    <div id="status" class="mb-6 p-4 bg-yellow-100 text-yellow-800 rounded-lg text-sm font-mono">Loading data... Check Console (F12) for details.</div>
+<body class="bg-slate-50 min-h-screen p-8">
+
+    <header class="mb-10">
+        <h1 class="text-3xl font-black italic text-indigo-600 tracking-tighter">PHMC ANALYTICS</h1>
+        <p class="text-slate-400 font-bold tracking-widest text-[10px] uppercase">Patient Satisfaction Overview</p>
+    </header>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div class="card"><canvas id="deptChart"></canvas></div>
-        <div class="card"><canvas id="trendChart"></canvas></div>
+        <div class="card">
+            <h4 class="text-xs font-black text-slate-400 uppercase tracking-[0.4em] mb-6">Satisfaction by Department</h4>
+            <div class="chart-container"><canvas id="deptChart"></canvas></div>
+        </div>
+
+        <div class="card">
+            <h4 class="text-xs font-black text-slate-400 uppercase tracking-[0.4em] mb-6">Feedback Volume Trends</h4>
+            <div class="chart-container"><canvas id="trendChart"></canvas></div>
+        </div>
     </div>
 
     <script>
+        // 1. CONFIGURATION
         const SUPABASE_URL = 'https://cqwicgpyxxkwyvnckgeh.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw';
         
-        const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        async function loadDashboard() {
-            const statusDiv = document.getElementById('status');
-            
-            // 1. Fetch data
-            const { data, error } = await client
-                .from('patient_feedback')
-                .select('*'); // Selecting * to see all available columns
+        // 2. CORE LOGIC
+        async function runDashboard() {
+            try {
+                // Fetching from your table
+                const { data, error } = await supabaseClient
+                    .from('patient_feedback')
+                    .select('department, created_at, feedback_type');
 
-            if (error) {
-                statusDiv.innerText = "Error: " + error.message;
-                console.error("Supabase Error:", error);
-                return;
+                if (error) throw error;
+                if (!data || data.length === 0) {
+                    console.warn("Data returned is empty.");
+                    return;
+                }
+
+                initializeCharts(data);
+            } catch (err) {
+                console.error("Initialization Failed:", err.message);
             }
-
-            if (!data || data.length === 0) {
-                statusDiv.innerText = "Dashboard Empty: No records found in 'patient_feedback'.";
-                return;
-            }
-
-            // 2. DEBUG MODE: Log data to console
-            console.log("--- DATA RECEIVED ---");
-            console.log("Total Records:", data.length);
-            console.log("Sample Row Structure:", data[0]);
-            console.log("Check the column names in the object above!");
-            statusDiv.className = "mb-6 p-4 bg-green-100 text-green-800 rounded-lg text-sm";
-            statusDiv.innerText = `Success: Loaded ${data.length} records. Check the Console (F12) for column names.`;
-
-            // 3. Render
-            renderCharts(data);
         }
 
-        function renderCharts(data) {
-            // Dynamic check for column names
-            // If data[0] has 'department' instead of 'device_id', use that.
-            const deptKey = data[0].hasOwnProperty('department') ? 'department' : 'device_id';
-            const dateKey = data[0].hasOwnProperty('created_at') ? 'created_at' : 'date';
-
-            // Dept Counts
-            const deptCounts = data.reduce((acc, row) => {
-                const val = row[deptKey] || 'Unknown';
-                acc[val] = (acc[val] || 0) + 1;
+        function initializeCharts(data) {
+            // Data Transformation for Departments
+            const deptData = data.reduce((acc, row) => {
+                const key = row.department || 'Unspecified';
+                acc[key] = (acc[key] || 0) + 1;
                 return acc;
             }, {});
 
+            // Data Transformation for Trends (Month)
+            const trendData = data.reduce((acc, row) => {
+                const month = row.created_at ? new Date(row.created_at).toLocaleString('default', { month: 'short' }) : 'Unknown';
+                acc[month] = (acc[month] || 0) + 1;
+                return acc;
+            }, {});
+
+            // Render Charts
             new Chart(document.getElementById('deptChart'), {
                 type: 'bar',
                 data: {
-                    labels: Object.keys(deptCounts),
-                    datasets: [{ label: 'Feedback by Dept', data: Object.values(deptCounts), backgroundColor: '#6366f1' }]
-                }
+                    labels: Object.keys(deptData),
+                    datasets: [{
+                        label: 'Feedback Count',
+                        data: Object.values(deptData),
+                        backgroundColor: '#6366f1',
+                        borderRadius: 8
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
             });
-
-            // Trends
-            const trendCounts = data.reduce((acc, row) => {
-                const d = row[dateKey] ? row[dateKey].substring(0, 7) : 'Unknown';
-                acc[d] = (acc[d] || 0) + 1;
-                return acc;
-            }, {});
 
             new Chart(document.getElementById('trendChart'), {
                 type: 'line',
                 data: {
-                    labels: Object.keys(trendCounts),
-                    datasets: [{ label: 'Volume', data: Object.values(trendCounts), borderColor: '#10b981' }]
-                }
+                    labels: Object.keys(trendData),
+                    datasets: [{
+                        label: 'Volume',
+                        data: Object.values(trendData),
+                        borderColor: '#10b981',
+                        fill: true,
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
             });
         }
 
-        loadDashboard();
+        // Initialize
+        runDashboard();
     </script>
 </body>
 </html>
