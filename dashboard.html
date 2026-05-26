@@ -2,20 +2,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PHMC | Analytics Dashboard</title>
+    <title>PHMC | 3D Analytics Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/highcharts-3d.js"></script>
 </head>
 <body class="bg-slate-50 flex h-screen overflow-hidden">
 
-    <aside class="w-80 bg-white border-r border-slate-200 p-6 flex flex-col shadow-sm">
-        <h2 class="text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase mb-8">Feedback Breakdown</h2>
-        <div id="highcharts-container" class="flex-grow"></div>
+    <aside class="w-80 bg-white border-r border-slate-200 p-6 shadow-sm">
+        <h2 class="text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase mb-8">System Status</h2>
+        <div class="p-4 bg-indigo-50 rounded-xl text-indigo-800 text-sm font-bold">
+            Live Feed: Connected
+        </div>
     </aside>
 
     <main class="flex-1 p-8 overflow-y-auto">
-        <h1 class="text-3xl font-black italic text-indigo-600 mb-8">PHMC OVERVIEW</h1>
+        <h1 class="text-3xl font-black italic text-indigo-600 mb-8">PHMC ANALYTICS</h1>
 
         <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
@@ -39,6 +42,10 @@
                 <p id="very-unhappy-count" class="text-3xl font-black text-red-800">0</p>
             </div>
         </div>
+
+        <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+            <div id="chart-container" class="h-96 w-full"></div>
+        </div>
     </main>
 
     <script>
@@ -47,29 +54,25 @@
         const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         async function init() {
-            const { data, error } = await client.from('patient_feedback').select('feedback_type');
-            if (error || !data) return;
+            const { data } = await client.from('patient_feedback').select('feedback_type');
+            if (!data) return;
 
-            // 1. Update Score Cards
             const getCount = (type) => data.filter(d => String(d.feedback_type).toLowerCase() === type.toLowerCase()).length;
             
+            // Populate Cards
             document.getElementById('total-count').innerText = data.length;
             document.getElementById('very-happy-count').innerText = getCount('very-happy');
             document.getElementById('happy-count').innerText = getCount('happy');
             document.getElementById('unhappy-count').innerText = getCount('unhappy');
             document.getElementById('very-unhappy-count').innerText = getCount('very-unhappy');
 
-            // 2. Render Sidebar Chart
-            Highcharts.chart('highcharts-container', {
-                chart: { type: 'column', backgroundColor: 'transparent' },
-                title: { text: '' },
-                xAxis: { categories: ['V.Happy', 'Happy', 'Unhappy', 'V.Unhappy'] },
-                yAxis: { title: { text: '' } },
-                series: [{ 
-                    name: 'Count', 
-                    data: [getCount('very-happy'), getCount('happy'), getCount('unhappy'), getCount('very-unhappy')],
-                    color: '#4f46e5' 
-                }],
+            // Render 3D Chart
+            Highcharts.chart('chart-container', {
+                chart: { type: 'column', options3d: { enabled: true, alpha: 10, beta: 25, depth: 70 } },
+                title: { text: 'Feedback Distribution Analysis' },
+                xAxis: { categories: ['Very Happy', 'Happy', 'Unhappy', 'Very Unhappy'] },
+                yAxis: { title: { text: 'Volume' } },
+                series: [{ name: 'Count', data: [getCount('very-happy'), getCount('happy'), getCount('unhappy'), getCount('very-unhappy')], color: '#4f46e5' }],
                 credits: { enabled: false }
             });
         }
