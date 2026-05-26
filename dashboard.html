@@ -3,102 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHMC | Patient Satisfaction Analytics</title>
+    <title>Patient Satisfaction Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        .chart-container { position: relative; height: 350px; width: 100%; }
-        .card { background: white; border-radius: 1.5rem; padding: 1.5rem; border: 1px solid #e2e8f0; }
-    </style>
 </head>
-<body class="bg-slate-50 min-h-screen p-8">
+<body class="bg-gray-100 p-6">
 
-    <header class="mb-10">
-        <h1 class="text-3xl font-black italic text-indigo-600 tracking-tighter">PHMC ANALYTICS</h1>
-        <p class="text-slate-400 font-bold tracking-widest text-[10px] uppercase">Departmental Performance & Feedback Trends</p>
-    </header>
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Patient Satisfaction Dashboard</h1>
+            <p class="text-gray-600">Department feedback analytics</p>
+        </header>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div class="card">
-            <h4 class="text-xs font-black text-slate-400 uppercase tracking-[0.4em] mb-6">Feedback by Department (Device ID)</h4>
-            <div class="chart-container"><canvas id="deptChart"></canvas></div>
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8 flex flex-wrap gap-4 items-end">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Start Date</label>
+                <input type="date" id="startDate" class="mt-1 p-2 border rounded-md">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">End Date</label>
+                <input type="date" id="endDate" class="mt-1 p-2 border rounded-md">
+            </div>
+            <button onclick="fetchData()" class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition">
+                Apply Filters
+            </button>
         </div>
 
-        <div class="card">
-            <h4 class="text-xs font-black text-slate-400 uppercase tracking-[0.4em] mb-6">Feedback Volume Trends</h4>
-            <div class="chart-container"><canvas id="trendChart"></canvas></div>
-        </div>
+        <div id="chartContainer" class="bg-white p-6 rounded-lg shadow-md h-96"></div>
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://cqwicgpyxxkwyvnckgeh.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw';
-        
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabase = supabase.createClient(
+            'https://cqwicgpyxxkwyvnckgeh.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw'
+        );
 
-        async function runDashboard() {
-            try {
-                // CORRECTED: Using device_id as the primary dimension
-                const { data, error } = await supabaseClient
-                    .from('patient_feedback')
-                    .select('device_id, created_at, feedback_type');
+        async function fetchData() {
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
 
-                if (error) throw error;
-                if (!data || data.length === 0) return;
+            let query = supabase.from('patient_feedback').select('device_id, feedback_type');
+            if (start) query = query.gte('created_at', start);
+            if (end) query = query.lte('created_at', end);
 
-                processData(data);
-            } catch (err) {
-                console.error("Dashboard Error:", err.message);
+            const { data, error } = await query;
+            if (error) {
+                alert('Error fetching data: ' + error.message);
+                return;
             }
+            updateChart(data);
         }
 
-        function processData(data) {
-            // Grouping by device_id (Department)
-            const deptData = data.reduce((acc, row) => {
-                const dept = row.device_id || 'Unspecified';
-                acc[dept] = (acc[dept] || 0) + 1;
-                return acc;
-            }, {});
+        function updateChart(data) {
+            const departments = [...new Set(data.map(item => item.device_id))];
+            const feedbackTypes = ['veryhappy', 'happy', 'unhappy', 'very unhappy'];
 
-            // Grouping by date for trend
-            const trendData = data.reduce((acc, row) => {
-                const date = row.created_at ? new Date(row.created_at).toLocaleDateString() : 'Unknown';
-                acc[date] = (acc[date] || 0) + 1;
-                return acc;
-            }, {});
+            const series = feedbackTypes.map(type => ({
+                name: type,
+                data: departments.map(dept => data.filter(d => d.device_id === dept && d.feedback_type === type).length)
+            }));
 
-            new Chart(document.getElementById('deptChart'), {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(deptData),
-                    datasets: [{
-                        label: 'Volume',
-                        data: Object.values(deptData),
-                        backgroundColor: '#6366f1'
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-
-            new Chart(document.getElementById('trendChart'), {
-                type: 'line',
-                data: {
-                    labels: Object.keys(trendData),
-                    datasets: [{
-                        label: 'Total Feedback',
-                        data: Object.values(trendData),
-                        borderColor: '#10b981',
-                        tension: 0.4,
-                        fill: true,
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)'
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
+            Highcharts.chart('chartContainer', {
+                chart: { type: 'column' },
+                title: { text: 'Feedback Distribution by Department' },
+                xAxis: { categories: departments },
+                yAxis: { min: 0, title: { text: 'Number of Patients' } },
+                plotOptions: { column: { stacking: 'normal' } },
+                series: series
             });
         }
 
-        runDashboard();
+        // Initial Load
+        fetchData();
     </script>
 </body>
 </html>
