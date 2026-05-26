@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Patient Satisfaction Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f7f6; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #333; }
+    </style>
+</head>
+<body>
+
+    <h1>Patient Satisfaction Dashboard 🏥</h1>
+    
+    <div class="grid">
+        <div class="card">
+            <h3>Satisfaction by Department</h3>
+            <canvas id="deptChart"></canvas>
+        </div>
+        <div class="card">
+            <h3>Feedback Trends (Jan - Apr)</h3>
+            <canvas id="trendChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // CONFIG: Your credentials
+        const SUPABASE_URL = 'https://cqwicgpyxxkwyvnckgeh.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw';
+        
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function loadDashboard() {
+            // Fetch data
+            const { data, error } = await supabase
+                .from('patient_feedback')
+                .select('feedback_type, device_id, created_at');
+
+            if (error) { 
+                console.error("Supabase Error:", error); 
+                return; 
+            }
+
+            renderDeptChart(data);
+            renderTrendChart(data);
+        }
+
+        function renderDeptChart(data) {
+            const ctx = document.getElementById('deptChart').getContext('2d');
+            
+            // Simple aggregation: count by device_id
+            const counts = {};
+            data.forEach(row => {
+                counts[row.device_id] = (counts[row.device_id] || 0) + 1;
+            });
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(counts),
+                    datasets: [{
+                        label: 'Feedback Count',
+                        data: Object.values(counts),
+                        backgroundColor: '#4ade80'
+                    }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        function renderTrendChart(data) {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            
+            // Count by month
+            const months = { '2026-01': 0, '2026-02': 0, '2026-03': 0, '2026-04': 0 };
+            data.forEach(row => {
+                const month = row.created_at.substring(0, 7);
+                if (months.hasOwnProperty(month)) months[month]++;
+            });
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Object.keys(months),
+                    datasets: [{
+                        label: 'Total Feedback Volume',
+                        data: Object.values(months),
+                        borderColor: '#3b82f6',
+                        tension: 0.1
+                    }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        loadDashboard();
+    </script>
+</body>
+</html>
