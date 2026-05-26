@@ -110,10 +110,9 @@
                 const display = showAll ? sorted : sorted.slice(0, 10);
                 document.getElementById('leaderboard-list').innerHTML = display.map(l => `<div class="flex justify-between p-2 bg-slate-50 rounded font-bold text-sm"><span>${l.name}</span><span class="text-indigo-600">${l.count}</span></div>`).join('');
             } else {
-                document.getElementById('leaderboard-title').innerText = currentDept + " Performance";
+                document.getElementById('leaderboard-title').innerText = "Selected Category Count";
                 btn.classList.add('hidden');
-                const cats = ['Very Happy', 'Happy', 'Unhappy', 'Very Unhappy'];
-                document.getElementById('leaderboard-list').innerHTML = cats.map((c, i) => vals[i] > 0 ? `<div class="flex justify-between p-2 bg-slate-50 rounded font-bold text-sm"><span>${c}</span><span class="text-indigo-600">${vals[i]}</span></div>` : '').join('');
+                document.getElementById('leaderboard-list').innerHTML = `<div class="flex justify-between p-2 bg-slate-50 rounded font-bold text-sm"><span>${currentSort.replace('-', ' ')}</span><span class="text-indigo-600">${getC(currentSort, filtered)}</span></div>`;
             }
 
             Highcharts.chart('chart-container', {
