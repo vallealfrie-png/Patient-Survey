@@ -69,21 +69,27 @@
         return;
       }
 
-      // 2. Fetch Department from 'users' table
+      // 2. Fetch Department and Role from 'users' table
       const { data: userData, error: userError } = await dbClient
         .from('users')
-        .select('department')
+        .select('department, role')
         .eq('id', authData.user.id)
         .single();
 
       if (userData) {
         localStorage.setItem('user_department', userData.department);
+        localStorage.setItem('user_role', userData.role);
       } else {
         localStorage.setItem('user_department', 'Unknown');
+        localStorage.setItem('user_role', 'staff');
       }
 
-      // 3. Redirect
-      window.location.href = "survey.html";
+      // 3. Redirect based on Role
+      if (userData && userData.role === 'manager') {
+        window.location.href = "dashboard.html";
+      } else {
+        window.location.href = "survey.html";
+      }
     });
 
     // FULL MOLECULE ANIMATION
