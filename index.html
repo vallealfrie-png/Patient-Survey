@@ -42,7 +42,6 @@
   </div>
 
   <script>
-    // FIX: Use a different variable name than 'supabase' for the client instance
     const dbClient = supabase.createClient(
       'https://cqwicgpyxxkwyvnckgeh.supabase.co', 
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw'
@@ -57,17 +56,34 @@
 
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const { error } = await dbClient.auth.signInWithPassword({
-        email: document.getElementById('email').value,
-        password: document.getElementById('password').value
-      });
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      // 1. Authenticate
+      const { data: authData, error } = await dbClient.auth.signInWithPassword({ email, password });
+      
       if (error) {
         const err = document.getElementById('error');
         err.textContent = error.message;
         err.classList.remove('hidden');
-      } else {
-        window.location.href = "survey.html";
+        return;
       }
+
+      // 2. Fetch Department from 'users' table
+      const { data: userData, error: userError } = await dbClient
+        .from('users')
+        .select('department')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (userData) {
+        localStorage.setItem('user_department', userData.department);
+      } else {
+        localStorage.setItem('user_department', 'Unknown');
+      }
+
+      // 3. Redirect
+      window.location.href = "survey.html";
     });
 
     // FULL MOLECULE ANIMATION
