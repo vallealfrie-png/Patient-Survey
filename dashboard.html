@@ -13,7 +13,7 @@
 
     <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            <h3 class="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Total Feedback</h3>
+            <h3 class="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Total</h3>
             <p id="total-count" class="text-3xl font-black text-slate-800">0</p>
         </div>
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-emerald-100">
@@ -35,64 +35,43 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            <canvas id="deptChart"></canvas>
-        </div>
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            <canvas id="trendChart"></canvas>
-        </div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100"><canvas id="deptChart"></canvas></div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100"><canvas id="trendChart"></canvas></div>
     </div>
 
     <script>
         const SUPABASE_URL = 'https://cqwicgpyxxkwyvnckgeh.supabase.co';
-        // IMPORTANT: Use the ANON PUBLIC KEY here. NOT the Service Role key.
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw'; 
-        
+        const SUPABASE_KEY = 'YOUR_ANON_PUBLIC_KEY_HERE'; 
         const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         async function initDashboard() {
             const status = document.getElementById('status-bar');
             
-            try {
-                const { data, error } = await client
-                    .from('patient_feedback')
-                    .select('feedback_type, device_id, created_at');
+            const { data, error } = await client
+                .from('patient_feedback')
+                .select('feedback_type, device_id, created_at');
 
-                if (error) throw error;
-                if (!data || data.length === 0) {
-                    status.innerText = "Data Table is Empty";
-                    status.className = "mb-6 p-4 bg-yellow-100 text-yellow-800 block";
-                    return;
-                }
-
-                updateDashboard(data);
-
-            } catch (err) {
-                status.innerText = `Error: ${err.message}. (Check if your Key is the public anon key and RLS is configured).`;
+            if (error) {
+                status.innerText = "Error: " + error.message;
                 status.className = "mb-6 p-4 bg-red-100 text-red-800 block";
-                console.error(err);
+                return;
             }
+
+            console.log("Data from Supabase:", data); // IMPORTANT: Check F12 Console
+            updateUI(data);
         }
 
-        function updateDashboard(data) {
-            // 1. Calculate Scores
-            const counts = {
-                total: data.length,
-                'very-happy': data.filter(d => d.feedback_type === 'very-happy').length,
-                'happy': data.filter(d => d.feedback_type === 'happy').length,
-                'unhappy': data.filter(d => d.feedback_type === 'unhappy').length,
-                'very-unhappy': data.filter(d => d.feedback_type === 'very-unhappy').length
-            };
+        function updateUI(data) {
+            // Case-insensitive matching logic
+            const getCount = (type) => data.filter(d => 
+                String(d.feedback_type).toLowerCase() === type.toLowerCase()
+            ).length;
 
-            // 2. Update UI
-            document.getElementById('total-count').innerText = counts.total;
-            document.getElementById('very-happy-count').innerText = counts['very-happy'];
-            document.getElementById('happy-count').innerText = counts['happy'];
-            document.getElementById('unhappy-count').innerText = counts['unhappy'];
-            document.getElementById('very-unhappy-count').innerText = counts['very-unhappy'];
-
-            // 3. Render Charts (Logic remains same)
-            // ... (Add chart rendering logic here as previously provided)
+            document.getElementById('total-count').innerText = data.length;
+            document.getElementById('very-happy-count').innerText = getCount('very-happy');
+            document.getElementById('happy-count').innerText = getCount('happy');
+            document.getElementById('unhappy-count').innerText = getCount('unhappy');
+            document.getElementById('very-unhappy-count').innerText = getCount('very-unhappy');
         }
 
         initDashboard();
