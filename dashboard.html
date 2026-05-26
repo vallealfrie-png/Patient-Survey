@@ -3,34 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patient Satisfaction Dashboard</title>
+    <title>Patient Satisfaction | Analytics</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .shadow-3xl { box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05); }
+    </style>
 </head>
-<body class="bg-gray-100 p-6">
+<body class="bg-slate-50 text-slate-900 min-h-screen p-8">
 
-    <div class="max-w-6xl mx-auto">
-        <header class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">Patient Satisfaction Dashboard</h1>
-            <p class="text-gray-600">Department feedback analytics</p>
+    <div class="max-w-7xl mx-auto space-y-10">
+        <header>
+            <h1 class="font-black text-indigo-600 tracking-tighter text-3xl uppercase italic">Patient Satisfaction</h1>
+            <p class="text-slate-400 text-sm font-bold uppercase tracking-widest">Departmental Feedback Analytics</p>
         </header>
 
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8 flex flex-wrap gap-4 items-end">
+        <div class="bg-white p-6 rounded-[2rem] shadow-3xl flex flex-wrap gap-4 items-end border border-slate-100">
             <div>
-                <label class="block text-sm font-medium text-gray-700">Start Date</label>
-                <input type="date" id="startDate" class="mt-1 p-2 border rounded-md">
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Start Date</label>
+                <input type="date" id="startDate" class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-sm font-bold w-full">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700">End Date</label>
-                <input type="date" id="endDate" class="mt-1 p-2 border rounded-md">
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">End Date</label>
+                <input type="date" id="endDate" class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-sm font-bold w-full">
             </div>
-            <button onclick="fetchData()" class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition">
-                Apply Filters
+            <button onclick="fetchData()" class="bg-indigo-600 text-white px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-indigo-700 transition">
+                Generate Report
             </button>
         </div>
 
-        <div id="chartContainer" class="bg-white p-6 rounded-lg shadow-md h-96"></div>
+        <div class="bg-white p-8 rounded-[2rem] shadow-3xl border border-slate-100">
+            <h4 class="text-xs font-black text-slate-400 uppercase tracking-[0.4em] mb-8">Sentiment Distribution by Department</h4>
+            <div id="chartContainer" class="h-96 w-full"></div>
+        </div>
     </div>
 
     <script>
@@ -48,28 +56,29 @@
             if (end) query = query.lte('created_at', end);
 
             const { data, error } = await query;
-            if (error) {
-                alert('Error fetching data: ' + error.message);
-                return;
-            }
+            if (error) return alert('Error: ' + error.message);
+            
             updateChart(data);
         }
 
         function updateChart(data) {
             const departments = [...new Set(data.map(item => item.device_id))];
             const feedbackTypes = ['veryhappy', 'happy', 'unhappy', 'very unhappy'];
+            const colors = ['#10b981', '#34d399', '#fbbf24', '#f43f5e'];
 
-            const series = feedbackTypes.map(type => ({
-                name: type,
-                data: departments.map(dept => data.filter(d => d.device_id === dept && d.feedback_type === type).length)
+            const series = feedbackTypes.map((type, index) => ({
+                name: type.toUpperCase(),
+                data: departments.map(dept => data.filter(d => d.device_id === dept && d.feedback_type === type).length),
+                color: colors[index]
             }));
 
             Highcharts.chart('chartContainer', {
-                chart: { type: 'column' },
-                title: { text: 'Feedback Distribution by Department' },
-                xAxis: { categories: departments },
-                yAxis: { min: 0, title: { text: 'Number of Patients' } },
-                plotOptions: { column: { stacking: 'normal' } },
+                chart: { type: 'column', backgroundColor: 'transparent' },
+                title: { text: null },
+                xAxis: { categories: departments, labels: { style: { fontWeight: 'bold' } } },
+                yAxis: { title: { text: 'Feedback Count' }, stackLabels: { enabled: true } },
+                plotOptions: { column: { stacking: 'normal', borderRadius: 5 } },
+                credits: { enabled: false },
                 series: series
             });
         }
