@@ -2,88 +2,74 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patient Satisfaction | Analytics</title>
+    <title>PHMC | Satisfaction Analytics</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .shadow-3xl { box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05); }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen p-8">
-
-    <div class="max-w-7xl mx-auto space-y-10">
-        <header>
-            <h1 class="font-black text-indigo-600 tracking-tighter text-3xl uppercase italic">Patient Satisfaction</h1>
-            <p class="text-slate-400 text-sm font-bold uppercase tracking-widest">Departmental Feedback Analytics</p>
-        </header>
-
-        <div class="bg-white p-6 rounded-[2rem] shadow-3xl flex flex-wrap gap-4 items-end border border-slate-100">
-            <div>
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Start Date</label>
-                <input type="date" id="startDate" class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-sm font-bold w-full">
-            </div>
-            <div>
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">End Date</label>
-                <input type="date" id="endDate" class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-sm font-bold w-full">
-            </div>
-            <button onclick="fetchData()" class="bg-indigo-600 text-white px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-indigo-700 transition">
-                Generate Report
-            </button>
+<body class="bg-slate-50 p-10">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="bg-white p-6 rounded-2xl border border-slate-200">
+            <h4 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Feedback Distribution</h4>
+            <canvas id="feedbackTypeChart"></canvas>
         </div>
-
-        <div class="bg-white p-8 rounded-[2rem] shadow-3xl border border-slate-100">
-            <h4 class="text-xs font-black text-slate-400 uppercase tracking-[0.4em] mb-8">Sentiment Distribution by Department</h4>
-            <div id="chartContainer" class="h-96 w-full"></div>
+        <div class="bg-white p-6 rounded-2xl border border-slate-200">
+            <h4 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Feedback per Department</h4>
+            <canvas id="deptChart"></canvas>
         </div>
     </div>
 
     <script>
-        const supabase = supabase.createClient(
-            'https://cqwicgpyxxkwyvnckgeh.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw'
-        );
+        const SUPABASE_URL = 'https://cqwicgpyxxkwyvnckgeh.supabase.co';
+        const SUPABASE_KEY = 'YOUR_ANON_KEY_HERE'; 
+        const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         async function fetchData() {
-            const start = document.getElementById('startDate').value;
-            const end = document.getElementById('endDate').value;
+            // UPDATED: Now selecting feedback_type to enable analysis
+            const { data, error } = await client
+                .from('patient_feedback')
+                .select('device_id, feedback_type, created_at');
 
-            let query = supabase.from('patient_feedback').select('device_id, feedback_type');
-            if (start) query = query.gte('created_at', start);
-            if (end) query = query.lte('created_at', end);
+            if (error) { console.error("Query Error:", error); return; }
+            if (!data || data.length === 0) { console.warn("No records found."); return; }
 
-            const { data, error } = await query;
-            if (error) return alert('Error: ' + error.message);
-            
-            updateChart(data);
+            renderCharts(data);
         }
 
-        function updateChart(data) {
-            const departments = [...new Set(data.map(item => item.device_id))];
-            const feedbackTypes = ['veryhappy', 'happy', 'unhappy', 'very unhappy'];
-            const colors = ['#10b981', '#34d399', '#fbbf24', '#f43f5e'];
+        function renderCharts(data) {
+            // 1. Count by Feedback Type
+            const feedbackCounts = data.reduce((acc, row) => {
+                const type = row.feedback_type || 'Unknown';
+                acc[type] = (acc[type] || 0) + 1;
+                return acc;
+            }, {});
 
-            const series = feedbackTypes.map((type, index) => ({
-                name: type.toUpperCase(),
-                data: departments.map(dept => data.filter(d => d.device_id === dept && d.feedback_type === type).length),
-                color: colors[index]
-            }));
+            // 2. Count by Department (device_id)
+            const deptCounts = data.reduce((acc, row) => {
+                const dept = row.device_id || 'Unspecified';
+                acc[dept] = (acc[dept] || 0) + 1;
+                return acc;
+            }, {});
 
-            Highcharts.chart('chartContainer', {
-                chart: { type: 'column', backgroundColor: 'transparent' },
-                title: { text: null },
-                xAxis: { categories: departments, labels: { style: { fontWeight: 'bold' } } },
-                yAxis: { title: { text: 'Feedback Count' }, stackLabels: { enabled: true } },
-                plotOptions: { column: { stacking: 'normal', borderRadius: 5 } },
-                credits: { enabled: false },
-                series: series
+            // Render Feedback Type Chart (Doughnut)
+            new Chart(document.getElementById('feedbackTypeChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(feedbackCounts),
+                    datasets: [{ data: Object.values(feedbackCounts), backgroundColor: ['#22c55e', '#eab308', '#f97316', '#ef4444'] }]
+                }
+            });
+
+            // Render Department Chart (Bar)
+            new Chart(document.getElementById('deptChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(deptCounts),
+                    datasets: [{ label: 'Feedback Count', data: Object.values(deptCounts), backgroundColor: '#4f46e5' }]
+                }
             });
         }
 
-        // Initial Load
         fetchData();
     </script>
 </body>
