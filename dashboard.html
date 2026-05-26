@@ -16,12 +16,12 @@
 
     <header class="mb-10">
         <h1 class="text-3xl font-black italic text-indigo-600 tracking-tighter">PHMC ANALYTICS</h1>
-        <p class="text-slate-400 font-bold tracking-widest text-[10px] uppercase">Patient Satisfaction Overview</p>
+        <p class="text-slate-400 font-bold tracking-widest text-[10px] uppercase">Departmental Performance & Feedback Trends</p>
     </header>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div class="card">
-            <h4 class="text-xs font-black text-slate-400 uppercase tracking-[0.4em] mb-6">Satisfaction by Department</h4>
+            <h4 class="text-xs font-black text-slate-400 uppercase tracking-[0.4em] mb-6">Feedback by Department (Device ID)</h4>
             <div class="chart-container"><canvas id="deptChart"></canvas></div>
         </div>
 
@@ -32,57 +32,50 @@
     </div>
 
     <script>
-        // 1. CONFIGURATION
         const SUPABASE_URL = 'https://cqwicgpyxxkwyvnckgeh.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw';
         
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // 2. CORE LOGIC
         async function runDashboard() {
             try {
-                // Fetching from your table
+                // CORRECTED: Using device_id as the primary dimension
                 const { data, error } = await supabaseClient
                     .from('patient_feedback')
-                    .select('department, created_at, feedback_type');
+                    .select('device_id, created_at, feedback_type');
 
                 if (error) throw error;
-                if (!data || data.length === 0) {
-                    console.warn("Data returned is empty.");
-                    return;
-                }
+                if (!data || data.length === 0) return;
 
-                initializeCharts(data);
+                processData(data);
             } catch (err) {
-                console.error("Initialization Failed:", err.message);
+                console.error("Dashboard Error:", err.message);
             }
         }
 
-        function initializeCharts(data) {
-            // Data Transformation for Departments
+        function processData(data) {
+            // Grouping by device_id (Department)
             const deptData = data.reduce((acc, row) => {
-                const key = row.department || 'Unspecified';
-                acc[key] = (acc[key] || 0) + 1;
+                const dept = row.device_id || 'Unspecified';
+                acc[dept] = (acc[dept] || 0) + 1;
                 return acc;
             }, {});
 
-            // Data Transformation for Trends (Month)
+            // Grouping by date for trend
             const trendData = data.reduce((acc, row) => {
-                const month = row.created_at ? new Date(row.created_at).toLocaleString('default', { month: 'short' }) : 'Unknown';
-                acc[month] = (acc[month] || 0) + 1;
+                const date = row.created_at ? new Date(row.created_at).toLocaleDateString() : 'Unknown';
+                acc[date] = (acc[date] || 0) + 1;
                 return acc;
             }, {});
 
-            // Render Charts
             new Chart(document.getElementById('deptChart'), {
                 type: 'bar',
                 data: {
                     labels: Object.keys(deptData),
                     datasets: [{
-                        label: 'Feedback Count',
+                        label: 'Volume',
                         data: Object.values(deptData),
-                        backgroundColor: '#6366f1',
-                        borderRadius: 8
+                        backgroundColor: '#6366f1'
                     }]
                 },
                 options: { responsive: true, maintainAspectRatio: false }
@@ -93,19 +86,18 @@
                 data: {
                     labels: Object.keys(trendData),
                     datasets: [{
-                        label: 'Volume',
+                        label: 'Total Feedback',
                         data: Object.values(trendData),
                         borderColor: '#10b981',
+                        tension: 0.4,
                         fill: true,
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        tension: 0.4
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)'
                     }]
                 },
                 options: { responsive: true, maintainAspectRatio: false }
             });
         }
 
-        // Initialize
         runDashboard();
     </script>
 </body>
