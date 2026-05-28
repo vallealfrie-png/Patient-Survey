@@ -125,34 +125,39 @@
             }
 
             Highcharts.chart('chart-container', {
-                chart: { type: 'column', options3d: { enabled: true, alpha: 10, beta: 25, depth: 70 } },
-                accessibility: { enabled: false },
-                title: { text: `Feedback Distribution: ${currentDept}` },
-                xAxis: { 
-                    categories: ['very-happy', 'happy', 'unhappy', 'very-unhappy'],
-                    useHTML: true, // This enables HTML rendering for the axis
-                    labels: {
-                        useHTML: true,
-                        formatter: function () {
-                            const icons = {
-                                'very-happy': 'happy-face.png',
-                                'happy': 'happiness.png',
-                                'unhappy': 'angry.png',
-                                'very-unhappy': 'angry (1).png'
-                            };
-                            return `<img src="${icons[this.value]}" style="width: 30px; height: 30px; vertical-align: middle;">`;
-                        }
-                    }
-                },
-                series: [{ 
-                    name: 'Count', 
-                    data: vals.map((v, i) => ({ 
-                        y: v, 
-                        color: ['#10b981', '#84cc16', '#fb923c', '#ef4444'][i] 
-                    })) 
-                }],
-                credits: { enabled: false }
-            });
+    chart: { 
+        type: 'column', 
+        options3d: { enabled: true, alpha: 10, beta: 25, depth: 70 } 
+    },
+    accessibility: { enabled: false },
+    title: { text: `Feedback Distribution: ${currentDept}` },
+    xAxis: { 
+        categories: ['very-happy', 'happy', 'unhappy', 'very-unhappy'],
+        labels: {
+            style: {
+                fontSize: '24px' // Makes the emojis stand out
+            },
+            formatter: function () {
+                // Mapping categories to Emojis
+                const emojis = {
+                    'very-happy': '😊',
+                    'happy': '🙂',
+                    'unhappy': '☹️',
+                    'very-unhappy': '😡'
+                };
+                return emojis[this.value] || this.value;
+            }
+        }
+    },
+    series: [{ 
+        name: 'Count', 
+        data: vals.map((v, i) => ({ 
+            y: v, 
+            color: ['#10b981', '#84cc16', '#fb923c', '#ef4444'][i] 
+        })) 
+    }],
+    credits: { enabled: false }
+});
         }
         init();
     </script>
