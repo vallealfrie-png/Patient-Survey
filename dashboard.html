@@ -127,7 +127,23 @@
             Highcharts.chart('chart-container', {
                 chart: { type: 'column', options3d: { enabled: true, alpha: 10, beta: 25, depth: 70 } },
                 title: { text: `Feedback Distribution: ${currentDept}` },
-                xAxis: { categories: ['V.Happy', 'Happy', 'Unhappy', 'V.Unhappy'] },
+                xAxis: { 
+                    categories: ['very-happy', 'happy', 'unhappy', 'very-unhappy'],
+                    labels: {
+                        useHTML: true,
+                        formatter: function () {
+                            // Map the categories to your image filenames
+                            const icons = {
+                                'very-happy': 'happy-face.png',
+                                'happy': 'happiness.png',
+                                'unhappy': 'angry.png',
+                                'very-unhappy': 'angry (1).png'
+                            };
+                            // Returns the image tag for the axis label
+                            return `<img src="${icons[this.value]}" style="width: 30px; height: 30px; object-fit: contain;">`;
+                        }
+                    }
+                },
                 series: [{ name: 'Count', data: vals.map((v, i) => ({ y: v, color: ['#10b981', '#84cc16', '#fb923c', '#ef4444'][i] })) }],
                 credits: { enabled: false }
             });
