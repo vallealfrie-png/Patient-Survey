@@ -125,15 +125,12 @@
             }
 
             Highcharts.chart('chart-container', {
-                chart: { 
-                    type: 'column', 
-                    options3d: { enabled: true, alpha: 10, beta: 25, depth: 70 } 
-                },
-                // Added to silence the accessibility warning
-                accessibility: { enabled: false }, 
+                chart: { type: 'column', options3d: { enabled: true, alpha: 10, beta: 25, depth: 70 } },
+                accessibility: { enabled: false },
                 title: { text: `Feedback Distribution: ${currentDept}` },
                 xAxis: { 
                     categories: ['very-happy', 'happy', 'unhappy', 'very-unhappy'],
+                    useHTML: true, // This enables HTML rendering for the axis
                     labels: {
                         useHTML: true,
                         formatter: function () {
@@ -143,7 +140,7 @@
                                 'unhappy': 'angry.png',
                                 'very-unhappy': 'angry (1).png'
                             };
-                            return `<img src="${icons[this.value]}" style="width: 30px; height: 30px; object-fit: contain;">`;
+                            return `<img src="${icons[this.value]}" style="width: 30px; height: 30px; vertical-align: middle;">`;
                         }
                     }
                 },
