@@ -18,7 +18,9 @@
 <body class="bg-slate-50 flex h-screen overflow-hidden">
 
     <aside class="w-64 bg-white border-r border-slate-200 p-4 shadow-sm overflow-y-auto">
-        <div class="mb-8 px-2"><img src="https://i.imgur.com/W4iMgls.jpeg" alt="Logo" class="w-full h-auto object-contain"></div>
+        <div class="mb-8 px-2">
+            <img src="https://i.imgur.com/W4iMgls.jpeg" alt="Company Logo" class="w-full h-auto object-contain">
+        </div>
         <h2 class="text-[9px] font-black text-slate-400 tracking-widest uppercase mb-4 px-2">Departments</h2>
         <div id="dept-list" class="space-y-1"></div>
     </aside>
@@ -26,17 +28,10 @@
     <main class="flex-1 p-8 overflow-y-auto">
         <div class="flex justify-between items-center mb-8">
             <h1 id="header-title" class="text-3xl font-black italic text-indigo-600">ALL DEPARTMENTS</h1>
-            <div class="flex gap-4">
-                <select id="role-selector" onchange="updateView()" class="p-2 bg-indigo-50 border border-indigo-200 rounded-lg font-bold text-xs text-indigo-700 shadow-sm">
-                    <option value="admin">Role: Admin</option>
-                    <option value="manager">Role: Manager</option>
-                    <option value="staff">Role: Staff</option>
-                </select>
-                <select id="month-selector" onchange="updateView()" class="p-2 bg-white border border-slate-200 rounded-lg font-bold text-xs shadow-sm">
-                    <option value="ALL">All Months</option>
-                    <option value="01">Jan</option><option value="02">Feb</option>
-                </select>
-            </div>
+            <select id="month-selector" onchange="updateView()" class="p-2 bg-white border border-slate-200 rounded-lg font-bold text-xs shadow-sm">
+                <option value="ALL">All Months</option>
+                <option value="01">Jan</option><option value="02">Feb</option><option value="03">Mar</option><option value="04">Apr</option>
+            </select>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
@@ -58,7 +53,7 @@
     </main>
 
     <script>
-        const client = window.supabase.createClient('https://cqwicgpyxxkwyvnckgeh.supabase.co', 'YOUR_KEY');
+        const client = window.supabase.createClient('https://cqwicgpyxxkwyvnckgeh.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxd2ljZ3B5eHhrd3l2bmNrZ2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODI5NDAsImV4cCI6MjA5NTI1ODk0MH0.Ra7GL_MZpr0Y1yQKtZ_op1GyVNDq5htU4hx4PZRWFQw');
         let allData = [], currentDept = 'ALL DEPARTMENTS', currentSort = 'very-happy', showAll = false;
 
         function toggleLeaderboard() { showAll = !showAll; updateView(); }
@@ -101,16 +96,8 @@
         }
 
         function updateView() {
-            const role = document.getElementById('role-selector').value;
             const month = document.getElementById('month-selector').value;
             let filtered = allData;
-            
-            if (role === 'staff' && (currentSort === 'unhappy' || currentSort === 'very-unhappy')) {
-                alert("Staff restricted from viewing negative feedback!");
-                setSort('very-happy');
-                return;
-            }
-
             if (currentDept !== 'ALL DEPARTMENTS') filtered = filtered.filter(d => d.device_id === currentDept);
             if (month !== 'ALL') filtered = filtered.filter(d => new Date(d.created_at).getMonth() + 1 === parseInt(month));
 
@@ -124,10 +111,13 @@
             
             if (currentDept === 'ALL DEPARTMENTS') {
                 document.getElementById('leaderboard-title').innerText = "Top Departments";
-                const sorted = [...new Set(allData.map(d => d.device_id))].map(d => ({ name: d, count: allData.filter(i => i.device_id === d && i.feedback_type.toLowerCase() === currentSort.toLowerCase()).length }))
-                                  .filter(item => item.count > 0).sort((a, b) => b.count - a.count);
+                const depts = [...new Set(allData.map(d => d.device_id))];
+                const sorted = depts.map(d => ({ name: d, count: allData.filter(i => i.device_id === d && i.feedback_type.toLowerCase() === currentSort.toLowerCase()).length }))
+                                  .filter(item => item.count > 0)
+                                  .sort((a, b) => b.count - a.count);
                 btn.classList.toggle('hidden', sorted.length <= 10);
-                listContainer.innerHTML = (showAll ? sorted : sorted.slice(0, 10)).map((l, i) => `<div class="leaderboard-item flex justify-between p-2 bg-slate-50 rounded text-xs font-bold" style="animation-delay: ${i * 0.05}s"><span>${l.name}</span><span class="text-indigo-600">${l.count}</span></div>`).join('');
+                const display = showAll ? sorted : sorted.slice(0, 10);
+                listContainer.innerHTML = display.map((l, i) => `<div class="leaderboard-item flex justify-between p-2 bg-slate-50 rounded text-xs font-bold" style="animation-delay: ${i * 0.05}s"><span>${l.name}</span><span class="text-indigo-600">${l.count}</span></div>`).join('');
             } else {
                 document.getElementById('leaderboard-title').innerText = "Category Count";
                 btn.classList.add('hidden');
@@ -136,22 +126,8 @@
 
             Highcharts.chart('chart-container', {
                 chart: { type: 'column', options3d: { enabled: true, alpha: 10, beta: 25, depth: 70 } },
-                title: { text: `Feedback Distribution` },
-                xAxis: { 
-                    categories: ['very-happy', 'happy', 'unhappy', 'very-unhappy'],
-                    labels: {
-                        useHTML: true,
-                        formatter: function () {
-                            const icons = {
-                                'very-happy': 'happy-face.png',
-                                'happy': 'happiness.png',
-                                'unhappy': 'angry.png',
-                                'very-unhappy': 'angry (1).png'
-                            };
-                            return `<img src="${icons[this.value]}" style="width: 30px; height: 30px;">`;
-                        }
-                    }
-                },
+                title: { text: `Feedback Distribution: ${currentDept}` },
+                xAxis: { categories: ['V.Happy', 'Happy', 'Unhappy', 'V.Unhappy'] },
                 series: [{ name: 'Count', data: vals.map((v, i) => ({ y: v, color: ['#10b981', '#84cc16', '#fb923c', '#ef4444'][i] })) }],
                 credits: { enabled: false }
             });
